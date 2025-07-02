@@ -8,22 +8,65 @@
     "scheme": "cpcompanion",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.cpcompanion",
+      "associatedDomains": ["applinks:cpcompanion.com"],
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Use Face ID to authenticate",
+        "NSCameraUsageDescription": "Allow camera access to scan documents",
+        "LSApplicationQueriesSchemes": ["cpcompanion", "https"]
+      }
     },
     "android": {
+      "package": "com.yourcompany.cpcompanion",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "cpcompanion.com",
+              "pathPrefix": "/"
+            },
+            {
+              "scheme": "cpcompanion"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"],
+          "autoVerify": true
+        }
+      ],
+      "edgeToEdgeEnabled": true,
+      "softwareKeyboardLayoutMode": "pan",
+      "navigationBar": {
+        "visible": "sticky-immersive",
+        "backgroundColor": "#ffffff",
+        "barStyle": "dark-content"
+      }
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "build": {
+        "babel": {
+          "include": ["@clerk/clerk-react"]
+        }
+      }
     },
     "plugins": [
+      "expo-secure-store",
       "expo-router",
       [
         "expo-splash-screen",
@@ -31,12 +74,33 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#ffffff",
+          "darkMode": {
+            "image": "./assets/images/splash-icon-dark.png",
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "flipper": true,
+            "newArchEnabled": true
+          },
+          "android": {
+            "newArchEnabled": true,
+            "kotlinVersion": "1.9.0"
+          }
         }
       ]
     ],
     "experiments": {
-      "typedRoutes": true
-    }
+      "typedRoutes": true,
+      "tsconfigPaths": true
+    },
+    "extra": {
+  "clerkPublishableKey": "${EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}"
+}
   }
 }
