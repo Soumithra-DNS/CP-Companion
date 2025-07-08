@@ -82,15 +82,50 @@ export default function ProblemListScreen() {
               onPress={() => openLink(item.url)}
               style={styles.cardWrapper}
             >
-              <LinearGradient
+                <LinearGradient
                 colors={item.colors}
                 start={[0, 0]}
                 end={[1, 1]}
                 style={styles.problemCard}
-              >
-                <MaterialIcons name="code" size={28} color="white" />
-                <Text style={styles.cardText}>{item.title}</Text>
-              </LinearGradient>
+                >
+                <View
+                  style={{
+                  backgroundColor: 'rgba(77, 76, 76, 0.18)',
+                  borderRadius: 50,
+                  padding: 12,
+                  marginRight: 12,
+                  shadowColor: '#00d2ff',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 6,
+                  elevation: 4,
+                  }}
+                >
+                  <MaterialIcons name="code" size={28} color="#fff" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                  style={[
+                  styles.cardText,
+                  {
+                  fontSize: 22,
+                  fontWeight: '700',
+                  letterSpacing: 0.5,
+                  color: '#fff',
+                  marginBottom: 2,
+                  },
+                  ]}
+                  >
+                  {item.title}
+                  </Text>
+                </View>
+                <MaterialIcons
+                  name="arrow-forward-ios"
+                  size={25}
+                  color="rgb(255, 255, 255)"
+                  style={{ marginLeft: 8 }}
+                />
+                </LinearGradient>
             </TouchableOpacity>
           ))}
         </View>
@@ -122,6 +157,8 @@ export default function ProblemListScreen() {
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
+    // Make background more visible by increasing contrast and adding a subtle overlay
+    backgroundColor: '#06131f',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -134,11 +171,14 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   title: {
-    fontSize: 32,
+    fontSize: 42,
     fontWeight: '800',
     color: COLORS.white,
     letterSpacing: 1.1,
     marginBottom: 8,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
   },
   subtitle: {
     color: COLORS.translucentWhite,
@@ -153,41 +193,46 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     width: '100%',
-    marginBottom: 16,
-    borderRadius: 12,
+    marginBottom: 15,
+    borderRadius: 15,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 7,
+    backgroundColor: 'rgba(0,0,0,0.12)', // subtle overlay for more contrast
   },
   problemCard: {
-    padding: 20,
-    borderRadius: 12,
+    padding: 30,
+    borderRadius: 19,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
     borderWidth: 1,
-    borderColor: 'rgba(0, 210, 255, 0.2)',
+    borderColor: 'rgba(0, 210, 255, 0.25)',
+    backgroundColor: 'rgba(0,0,0,0.18)', // more visible card background
   },
   cardText: {
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: 22,
     color: 'white',
     flex: 1,
+    textShadowColor: 'rgb(0, 0, 0)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 3,
   },
   authCard: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: COLORS.cardBg,
+    backgroundColor: 'rgba(15,23,42,0.92)', // more visible auth card
     borderRadius: 16,
     padding: 24,
     marginTop: 20,
     alignItems: 'center',
     alignSelf: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.13)',
   },
   button: {
     backgroundColor: COLORS.primary,
@@ -196,6 +241,11 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginBottom: 20,
+    shadowColor: '#00d2ff',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
   buttonText: {
     color: COLORS.white,
