@@ -16,8 +16,10 @@ const { width } = Dimensions.get('window');
 const isSmallScreen = width < 400;
 
 const COLORS = {
-  primary: '#00d2ff',
-  secondary: '#3a7bd5',
+  primary: '#3A59D1',       // Deep blue
+  secondary: '#3D90D7',     // Light blue
+  accent1: '#7AC6D2',       // Teal
+  accent2: '#B5FCCD',       // Mint green
   darkBg: '#0f172a',
   white: '#ffffff',
   translucentWhite: 'rgba(255, 255, 255, 0.7)',
@@ -32,15 +34,15 @@ type Feature = {
 };
 
 const mainFeatures: Feature[] = [
-  { label: 'Resources', route: '/resources', icon: 'menu-book', colors: ['#00d2ff', '#007bff'] },
-  { label: 'Problem List', route: '/problemList', icon: 'list-alt', colors: ['#00d2ff', '#007bff'] },
-  { label: 'Contest Time', route: '/contestTime', icon: 'access-time', colors: ['#00d2ff', '#007bff'] },
-  { label: 'Progress', route: '/progress', icon: 'trending-up', colors: ['#00d2ff', '#007bff'] },
+  { label: 'Resources', route: '/resources', icon: 'menu-book', colors: ['#3A59D1', '#3D90D7'] },
+  { label: 'Problem List', route: '/problemList', icon: 'list-alt', colors: ['#3D90D7', '#7AC6D2'] },
+  { label: 'Contest Time', route: '/contestTime', icon: 'access-time', colors: ['#7AC6D2', '#B5FCCD'] },
+  { label: 'Progress', route: '/progress', icon: 'trending-up', colors: ['#3A59D1', '#B5FCCD'] },
 ];
 
 const upcomingFeatures: Feature[] = [
-  { label: 'Practice', route: '/practice', icon: 'code', colors: ['#4facfe', '#00f2fe'] },
-  { label: 'Social', route: '/social', icon: 'people', colors: ['#a6c1ee', '#fbc2eb'] },
+  { label: 'Practice', route: '/practice', icon: 'code', colors: ['#3A59D1', '#7AC6D2'] },
+  { label: 'Social', route: '/social', icon: 'people', colors: ['#3D90D7', '#B5FCCD'] },
 ];
 
 export default function HomeScreen() {
@@ -92,26 +94,51 @@ export default function HomeScreen() {
           {menuVisible && (
             <View style={styles.menuOverlay}>
               <View style={styles.menuContainer}>
-                {menuItems.map((item, idx) => (
-                  <TouchableOpacity
-                    key={idx}
-                    style={styles.menuItem}
-                    onPress={() => {
-                      setMenuVisible(false);
-                      if (item.route) router.push(item.route as any);
-                      if (item.action) item.action();
-                    }}
+                {/* Menu Header with Close Button */}
+                <View style={styles.menuHeader}>
+                  <Text style={styles.menuTitle}>Menu</Text>
+                  <TouchableOpacity 
+                    onPress={() => setMenuVisible(false)}
+                    style={styles.closeButton}
                   >
-                    <MaterialIcons name={item.icon} size={22} color={COLORS.primary} style={{ marginRight: 12 }} />
-                    <Text style={styles.menuItemText}>{item.label}</Text>
+                    <MaterialIcons name="close" size={24} color={COLORS.white} />
                   </TouchableOpacity>
-                ))}
-                <TouchableOpacity onPress={() => setMenuVisible(false)} style={styles.menuClose}>
-                  <Text style={{ color: COLORS.primary, fontWeight: 'bold', fontSize: 16 }}>Close</Text>
-                </TouchableOpacity>
+                </View>
+
+                {/* Menu Items */}
+                <View style={styles.menuItemsContainer}>
+                  {menuItems.map((item, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      style={styles.menuItem}
+                      onPress={() => {
+                        setMenuVisible(false);
+                        if (item.route) router.push(item.route as any);
+                        if (item.action) item.action();
+                      }}
+                    >
+                      <View style={styles.menuIconContainer}>
+                        <MaterialIcons 
+                          name={item.icon} 
+                          size={22} 
+                          color={COLORS.primary} 
+                        />
+                      </View>
+                      <Text style={styles.menuItemText}>{item.label}</Text>
+                      <MaterialIcons 
+                        name="chevron-right" 
+                        size={20} 
+                        color={COLORS.translucentWhite} 
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
               {/* Transparent area to close menu */}
-              <TouchableOpacity style={{ flex: 1 }} onPress={() => setMenuVisible(false)} />
+              <TouchableOpacity 
+                style={{ flex: 1 }} 
+                onPress={() => setMenuVisible(false)} 
+              />
             </View>
           )}
 
@@ -134,8 +161,6 @@ export default function HomeScreen() {
                 ))}
               </View>
             </View>
-
-            {/* Sign Out button removed from here */}
           </SignedIn>
 
           <SignedOut>
@@ -224,7 +249,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingLeft: 12,
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary,
+    borderLeftColor: COLORS.accent2,
   },
   gridContainer: {
     flexDirection: 'row',
@@ -294,28 +319,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   footerLink: {
-    color: COLORS.primary,
+    color: COLORS.accent2,
     fontWeight: '600',
     fontSize: 14,
-  },
-  signOutButton: {
-    marginTop: 20,
-    padding: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.33)',
-    borderRadius: 12,
-    width: '100%',
-    maxWidth: 200,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    borderWidth: 2,
-    borderColor: 'rgb(255, 255, 255)',
-  },
-  signOutText: {
-    color: COLORS.white,
-    fontWeight: '600',
-    fontSize: 16,
   },
   menuOverlay: {
     position: 'absolute',
@@ -323,40 +329,60 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
     flexDirection: 'row',
     zIndex: 100,
   },
   menuContainer: {
     backgroundColor: COLORS.darkBg,
-    borderTopRightRadius: 24,
-    borderBottomRightRadius: 24,
-    padding: 24,
-    minWidth: 220,
-    alignItems: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: { width: 4, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 10,
+    width: '75%',
+    maxWidth: 300,
     height: '100%',
-    justifyContent: 'flex-start',
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  menuHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  menuTitle: {
+    color: COLORS.white,
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  closeButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  menuItemsContainer: {
+    paddingVertical: 10,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    width: '100%',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  menuIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(58, 89, 209, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
   },
   menuItemText: {
     color: COLORS.white,
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  menuClose: {
-    alignSelf: 'flex-end',
-    marginTop: 10,
-    padding: 6,
+    fontSize: 16,
+    fontWeight: '500',
+    flex: 1,
   },
 });
