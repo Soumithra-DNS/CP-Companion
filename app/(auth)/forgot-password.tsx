@@ -1,4 +1,3 @@
-// app/(auth)/forgot-password.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -18,13 +17,16 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 
 const COLORS = {
-  primary: '#00d2ff',
-  secondary: '#3a7bd5',
+  primary: '#3A59D1',
+  secondary: '#3D90D7',
+  accent1: '#7AC6D2',
+  accent2: '#B5FCCD',
   darkBg: '#0f172a',
   white: '#ffffff',
   translucentWhite: 'rgba(255, 255, 255, 0.7)',
-  inputBg: 'rgba(255, 255, 255, 0.08)',
-  inputBorder: 'rgba(255, 255, 255, 0.1)',
+  inputBg: 'rgba(255, 255, 255, 0.06)',
+  inputBorder: 'rgba(255, 255, 255, 0.2)',
+  placeholder: '#94a3b8',
 };
 
 export default function ForgotPasswordScreen() {
@@ -34,11 +36,12 @@ export default function ForgotPasswordScreen() {
   const [emailSent, setEmailSent] = useState(false);
   const router = useRouter();
 
-  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleForgotPassword = async () => {
     const trimmedEmail = email.trim();
-    
+
     if (!trimmedEmail) {
       Alert.alert('Error', 'Please enter your email');
       return;
@@ -55,19 +58,18 @@ export default function ForgotPasswordScreen() {
         strategy: 'reset_password_email_code',
         identifier: trimmedEmail,
       });
-      
+
       setEmailSent(true);
       Alert.alert(
-        'Email Sent', 
-        'Check your inbox for the reset link. If you don\'t see it, please check your spam folder.',
-        [
-          { text: 'OK', onPress: () => router.replace('/sign-in') }
-        ]
+        'Email Sent',
+        'Check your inbox for the reset code.',
+        [{ text: 'OK', onPress: () => router.replace('/(auth)/sign-in') }]
       );
     } catch (error: any) {
-      const message = error.errors?.[0]?.message || 
-                    error.message || 
-                    'Something went wrong. Please try again.';
+      const message =
+        error?.errors?.[0]?.message ||
+        error?.message ||
+        'Something went wrong. Please try again.';
       Alert.alert('Error', message);
     } finally {
       setLoading(false);
@@ -81,25 +83,25 @@ export default function ForgotPasswordScreen() {
         style={styles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.content}>
             <View style={styles.header}>
-              <MaterialIcons 
-                name="lock-reset" 
-                size={54} 
-                color={COLORS.primary} 
+              <MaterialIcons
+                name="lock-reset"
+                size={54}
+                color={COLORS.primary}
                 style={styles.logoIcon}
               />
               <Text style={styles.title}>
                 <Text style={{ color: COLORS.primary }}>Reset</Text> Password
               </Text>
               <Text style={styles.subtitle}>
-                {emailSent 
-                  ? "We've sent you an email with reset instructions"
-                  : "Enter your email to receive a password reset link"}
+                {emailSent
+                  ? "We've sent reset instructions to your email"
+                  : 'Enter your email to receive a password reset code'}
               </Text>
             </View>
 
@@ -110,7 +112,7 @@ export default function ForgotPasswordScreen() {
                   <TextInput
                     style={styles.input}
                     placeholder="Enter your email"
-                    placeholderTextColor="#94a3b8"
+                    placeholderTextColor={COLORS.placeholder}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -129,19 +131,21 @@ export default function ForgotPasswordScreen() {
                   {loading ? (
                     <ActivityIndicator color={COLORS.white} />
                   ) : (
-                    <Text style={styles.buttonText}>Send Code</Text>
+                    <Text style={styles.buttonText}>Send Reset Code</Text>
                   )}
                 </TouchableOpacity>
               </View>
             )}
 
-            <Link href="/(auth)/sign-in" asChild>
-              <TouchableOpacity style={styles.linkContainer} disabled={loading}>
-                <Text style={[styles.link, loading && styles.disabledLink]}>
-                  <MaterialIcons name="arrow-back" size={16} color={COLORS.primary} /> Back to Sign In
-                </Text>
-              </TouchableOpacity>
-            </Link>
+            <View style={styles.footer}>
+              <Link href="/(auth)/sign-in" asChild>
+                <TouchableOpacity style={styles.linkContainer} disabled={loading}>
+                  <Text style={[styles.link, loading && styles.disabledLink]}>
+                    <MaterialIcons name="arrow-back" size={16} color={COLORS.accent1} /> Back to Sign In
+                  </Text>
+                </TouchableOpacity>
+              </Link>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -150,16 +154,12 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
+  gradient: { flex: 1 },
+  container: { flex: 1 },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: 24,
   },
   content: {
     alignItems: 'center',
@@ -170,8 +170,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   logoIcon: {
-    marginBottom: 10,
-    textShadowColor: COLORS.primary,
+    marginBottom: 12,
+    textShadowColor: 'rgba(58, 89, 209, 0.4)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 8,
   },
@@ -180,52 +180,55 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.white,
     marginBottom: 8,
-    letterSpacing: 1.2,
+    letterSpacing: 1.1,
   },
   subtitle: {
     color: COLORS.translucentWhite,
-    fontSize: 17,
+    fontSize: 16,
     textAlign: 'center',
     fontWeight: '400',
+    maxWidth: 300,
+    lineHeight: 24,
   },
   card: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 18,
-    padding: 32,
+    padding: 28,
     marginTop: 20,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.13,
+    shadowOpacity: 0.12,
     shadowRadius: 18,
-    elevation: 10,
-    ...(Platform.OS === 'web' ? { boxShadow: '0 8px 32px 0 rgba(0,0,0,0.13)' } : {}),
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   inputGroup: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   label: {
     fontSize: 14,
     fontWeight: '500',
     color: COLORS.white,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   input: {
     backgroundColor: COLORS.inputBg,
     borderColor: COLORS.inputBorder,
-    borderWidth: 1,
+    borderWidth: 1.2,
     borderRadius: 10,
-    padding: 16,
+    padding: 14,
     fontSize: 16,
     color: COLORS.white,
     width: '100%',
   },
   button: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 8,
     width: '100%',
     alignItems: 'center',
@@ -235,7 +238,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 6,
     elevation: 2,
-    ...(Platform.OS === 'web' ? { boxShadow: '0 2px 8px 0 rgba(0,210,255,0.10)' } : {}),
   },
   disabledButton: {
     opacity: 0.7,
@@ -243,14 +245,20 @@ const styles = StyleSheet.create({
   buttonText: {
     color: COLORS.white,
     fontWeight: '700',
-    fontSize: 17,
+    fontSize: 16,
     letterSpacing: 0.5,
   },
-  linkContainer: {
+  footer: {
     marginTop: 24,
+    width: '100%',
+    alignItems: 'center',
+  },
+  linkContainer: {
+    width: '100%',
+    alignItems: 'center',
   },
   link: {
-    color: COLORS.primary,
+    color: COLORS.accent1,
     fontWeight: '600',
     fontSize: 15,
     textAlign: 'center',

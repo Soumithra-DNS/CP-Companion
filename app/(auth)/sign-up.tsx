@@ -1,4 +1,3 @@
-// app/(auth)/sign-up.tsx
 import { useState } from 'react';
 import {
   View,
@@ -18,13 +17,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const COLORS = {
-  primary: '#00d2ff',
-  secondary: '#3a7bd5',
+  primary: '#3A59D1',
+  secondary: '#3D90D7',
+  accent1: '#7AC6D2',
+  accent2: '#B5FCCD',
   darkBg: '#0f172a',
   white: '#ffffff',
-  translucentWhite: 'rgba(255, 255, 255, 0.7)',
-  inputBg: 'rgba(255, 255, 255, 0.08)',
-  inputBorder: 'rgba(255, 255, 255, 0.1)',
+  inputBg: 'rgba(255, 255, 255, 0.12)',
+  inputBorder: 'rgba(255, 255, 255, 0.3)',
 };
 
 export default function SignUpScreen() {
@@ -63,15 +63,11 @@ export default function SignUpScreen() {
 
     try {
       setLoading(true);
-      await signUp.create({
-        emailAddress: email,
-        password,
-      });
-
+      await signUp.create({ emailAddress: email, password });
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
       setPendingVerification(true);
     } catch (err: any) {
-      const message = err?.errors?.[0]?.message || err?.message || 'An unknown error occurred.';
+      const message = err?.errors?.[0]?.message || err?.message || 'An error occurred.';
       Alert.alert('Error', message);
     } finally {
       setLoading(false);
@@ -94,173 +90,138 @@ export default function SignUpScreen() {
     }
   };
 
-  // Verification screen
-  if (pendingVerification) {
-    return (
-      <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.gradient}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
-        >
-          <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-            <View style={styles.content}>
-              <View style={styles.header}>
-                <MaterialIcons 
-                  name="code" 
-                  size={54} 
-                  color={COLORS.primary} 
-                  style={styles.logoIcon}
-                />
-                <Text style={styles.title}>
-                  <Text style={{ color: COLORS.primary }}>Verify</Text> Email
-                </Text>
-                <Text style={styles.subtitle}>Check your email for the verification code</Text>
-              </View>
+  const AuthHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
+    <View style={styles.header}>
+      <MaterialIcons name="code" size={54} color={COLORS.primary} style={styles.logoIcon} />
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.subtitle}>{subtitle}</Text>
+    </View>
+  );
 
-              <View style={styles.card}>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Verification Code</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter verification code"
-                    placeholderTextColor="#94a3b8"
-                    autoCapitalize="none"
-                    value={code}
-                    onChangeText={setCode}
-                    selectionColor={COLORS.primary}
-                  />
-                </View>
+  const AuthButton = ({ title, onPress }: { title: string; onPress: () => void }) => (
+    <TouchableOpacity
+      style={[styles.button, loading && styles.disabledButton]}
+      onPress={onPress}
+      disabled={loading}
+    >
+      {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.buttonText}>{title}</Text>}
+    </TouchableOpacity>
+  );
 
-                <TouchableOpacity
-                  style={[styles.button, loading && styles.disabledButton]}
-                  onPress={handleVerification}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color={COLORS.white} />
-                  ) : (
-                    <Text style={styles.buttonText}>Verify</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </LinearGradient>
-    );
-  }
+  const PasswordField = ({
+    label,
+    value,
+    onChange,
+    visible,
+    toggleVisible,
+  }: {
+    label: string;
+    value: string;
+    onChange: (val: string) => void;
+    visible: boolean;
+    toggleVisible: () => void;
+  }) => (
+    <View style={styles.inputGroup}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.passwordWrapper}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder={label}
+          placeholderTextColor="#cbd5e1"
+          secureTextEntry={!visible}
+          value={value}
+          onChangeText={onChange}
+          selectionColor={COLORS.primary}
+        />
+        <TouchableOpacity style={styles.eyeButton} onPress={toggleVisible}>
+          <MaterialIcons name={visible ? 'visibility-off' : 'visibility'} size={22} color="#94a3b8" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
-  // Sign up form screen
-  return (
+  const InputField = ({
+    label,
+    value,
+    onChange,
+    ...props
+  }: {
+    label: string;
+    value: string;
+    onChange: (val: string) => void;
+    [x: string]: any;
+  }) => (
+    <View style={styles.inputGroup}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={styles.input}
+        placeholder={label}
+        placeholderTextColor="#cbd5e1"
+        value={value}
+        onChangeText={onChange}
+        selectionColor={COLORS.primary}
+        {...props}
+      />
+    </View>
+  );
+
+  const VerificationScreen = () => (
     <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.gradient}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
-            <View style={styles.header}>
-              <MaterialIcons 
-                name="code" 
-                size={54} 
-                color={COLORS.primary} 
-                style={styles.logoIcon}
-              />
-              <Text style={styles.title}>
-                <Text style={{ color: COLORS.primary }}>Create</Text> Account
-              </Text>
-              <Text style={styles.subtitle}>
-                Start your competitive programming journey with us
-              </Text>
-            </View>
-
+            <AuthHeader title="Verify Email" subtitle="Enter the code sent to your email" />
             <View style={styles.card}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email Address</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your email"
-                  placeholderTextColor="#94a3b8"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  value={email}
-                  onChangeText={setEmail}
-                  selectionColor={COLORS.primary}
-                />
-              </View>
+              <InputField label="Verification Code" value={code} onChange={setCode} />
+              <AuthButton title="Verify" onPress={handleVerification} />
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
+  );
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Password</Text>
-                <View style={styles.passwordWrapper}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    placeholder="Enter your password"
-                    placeholderTextColor="#94a3b8"
-                    secureTextEntry={!isPasswordVisible}
-                    value={password}
-                    onChangeText={setPassword}
-                    selectionColor={COLORS.primary}
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeButton}
-                    onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-                  >
-                    <MaterialIcons 
-                      name={isPasswordVisible ? 'visibility-off' : 'visibility'} 
-                      size={22} 
-                      color="#94a3b8" 
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
+  if (pendingVerification) return <VerificationScreen />;
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Confirm Password</Text>
-                <View style={styles.passwordWrapper}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    placeholder="Confirm your password"
-                    placeholderTextColor="#94a3b8"
-                    secureTextEntry={!isConfirmPasswordVisible}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    selectionColor={COLORS.primary}
-                    onSubmitEditing={handleSignUp}
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeButton}
-                    onPress={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
-                  >
-                    <MaterialIcons 
-                      name={isConfirmPasswordVisible ? 'visibility-off' : 'visibility'} 
-                      size={22} 
-                      color="#94a3b8" 
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
+  return (
+    <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.gradient}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+          <View style={styles.content}>
+            <AuthHeader
+              title="Create Account"
+              subtitle="Start your competitive programming journey"
+            />
+            <View style={styles.card}>
+              <InputField
+                label="Email Address"
+                value={email}
+                onChange={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              <PasswordField
+                label="Password"
+                value={password}
+                onChange={setPassword}
+                visible={isPasswordVisible}
+                toggleVisible={() => setIsPasswordVisible(!isPasswordVisible)}
+              />
+              <PasswordField
+                label="Confirm Password"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                visible={isConfirmPasswordVisible}
+                toggleVisible={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
+              />
 
-              <TouchableOpacity
-                style={[styles.button, loading && styles.disabledButton]}
-                onPress={handleSignUp}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color={COLORS.white} />
-                ) : (
-                  <Text style={styles.buttonText}>Sign Up</Text>
-                )}
-              </TouchableOpacity>
+              <AuthButton title="Sign Up" onPress={handleSignUp} />
 
               <View style={styles.footer}>
                 <Text style={styles.footerText}>Already have an account? </Text>
                 <Link href="/(auth)/sign-in" asChild>
                   <TouchableOpacity disabled={loading}>
-                    <Text style={[styles.footerLink, loading && styles.disabledLink]}>
-                      Login
-                    </Text>
+                    <Text style={[styles.footerLink, loading && styles.disabledLink]}>Login</Text>
                   </TouchableOpacity>
                 </Link>
               </View>
@@ -273,25 +234,11 @@ export default function SignUpScreen() {
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  content: {
-    alignItems: 'center',
-    width: '100%',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
+  gradient: { flex: 1 },
+  container: { flex: 1 },
+  scrollContainer: { flexGrow: 1, justifyContent: 'center', padding: 20 },
+  content: { alignItems: 'center', width: '100%' },
+  header: { alignItems: 'center', marginBottom: 28 },
   logoIcon: {
     marginBottom: 10,
     textShadowColor: COLORS.primary,
@@ -302,46 +249,37 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     color: COLORS.white,
-    marginBottom: 8,
+    marginBottom: 6,
     letterSpacing: 1.2,
   },
   subtitle: {
-    color: COLORS.translucentWhite,
-    fontSize: 17,
+    color: COLORS.accent2,
+    fontSize: 16,
     textAlign: 'center',
     fontWeight: '400',
   },
   card: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 18,
-    padding: 32,
-    marginTop: 20,
+    padding: 28,
+    marginTop: 10,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.13,
+    shadowOpacity: 0.12,
     shadowRadius: 18,
-    elevation: 10,
-    ...(Platform.OS === 'web' ? { boxShadow: '0 8px 32px 0 rgba(0,0,0,0.13)' } : {}),
+    elevation: 8,
   },
-  inputGroup: {
-    width: '100%',
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.white,
-    marginBottom: 8,
-  },
+  inputGroup: { width: '100%', marginBottom: 18 },
+  label: { fontSize: 14, fontWeight: '500', color: COLORS.white, marginBottom: 6 },
   input: {
     backgroundColor: COLORS.inputBg,
     borderColor: COLORS.inputBorder,
     borderWidth: 1,
     borderRadius: 10,
-    padding: 16,
+    padding: 14,
     fontSize: 16,
     color: COLORS.white,
     width: '100%',
@@ -357,51 +295,28 @@ const styles = StyleSheet.create({
   },
   passwordInput: {
     flex: 1,
-    padding: 16,
+    padding: 14,
     fontSize: 16,
     color: COLORS.white,
   },
-  eyeButton: {
-    padding: 16,
-  },
+  eyeButton: { padding: 14 },
   button: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 8,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 2,
-    ...(Platform.OS === 'web' ? { boxShadow: '0 2px 8px 0 rgba(0,210,255,0.10)' } : {}),
+    marginTop: 10,
   },
-  disabledButton: {
-    opacity: 0.7,
-  },
+  disabledButton: { opacity: 0.7 },
   buttonText: {
     color: COLORS.white,
     fontWeight: '700',
     fontSize: 17,
     letterSpacing: 0.5,
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  footerText: {
-    color: COLORS.translucentWhite,
-    fontSize: 14,
-  },
-  footerLink: {
-    color: COLORS.primary,
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  disabledLink: {
-    opacity: 0.5,
-  },
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 14 },
+  footerText: { color: COLORS.white, fontSize: 14 },
+  footerLink: { color: COLORS.accent1, fontWeight: '600', fontSize: 14 },
+  disabledLink: { opacity: 0.5 },
 });

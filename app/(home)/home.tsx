@@ -10,16 +10,19 @@ import {
   Text,
   TouchableOpacity,
   View,
+  StatusBar,
 } from 'react-native';
 
-const { width } = Dimensions.get('window');
-const isSmallScreen = width < 400;
+const { width, height } = Dimensions.get('window');
+const isPortrait = height > width;
+const CARD_GAP = 16;
+const CARD_WIDTH = (width - 48) / 2; // 32 total padding + 16 gap
 
 const COLORS = {
-  primary: '#3A59D1',       // Deep blue
-  secondary: '#3D90D7',     // Light blue
-  accent1: '#7AC6D2',       // Teal
-  accent2: '#B5FCCD',       // Mint green
+  primary: '#3A59D1',
+  secondary: '#3D90D7',
+  accent1: '#7AC6D2',
+  accent2: '#B5FCCD',
   darkBg: '#0f172a',
   white: '#ffffff',
   translucentWhite: 'rgba(255, 255, 255, 0.7)',
@@ -31,6 +34,13 @@ type Feature = {
   route: string;
   icon: keyof typeof MaterialIcons.glyphMap;
   colors: readonly [string, string];
+};
+
+type MenuItem = {
+  label: string;
+  route?: string;
+  action?: () => void;
+  icon: keyof typeof MaterialIcons.glyphMap;
 };
 
 const mainFeatures: Feature[] = [
@@ -54,14 +64,7 @@ export default function HomeScreen() {
     signOut();
   };
 
-  // All menu items (add more as needed)
-  const menuItems: Array<{
-    label: string;
-    route?: string;
-    action?: () => void;
-    icon: keyof typeof MaterialIcons.glyphMap;
-  }> = [
-    { label: 'Profile', route: '/profile', icon: 'person' },
+  const menuItems: MenuItem[] = [
     ...mainFeatures.map(f => ({ label: f.label, route: f.route, icon: f.icon })),
     ...upcomingFeatures.map(f => ({ label: f.label, route: f.route, icon: f.icon })),
     { label: 'Sign Out', action: handleSignOut, icon: 'logout' },
@@ -69,20 +72,22 @@ export default function HomeScreen() {
 
   return (
     <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.gradient}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.content}>
-          {/* Header with menu */}
+          {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerRow}>
-              <TouchableOpacity onPress={() => setMenuVisible(true)} style={{ marginRight: 16 }}>
+              <TouchableOpacity 
+                onPress={() => setMenuVisible(true)} 
+                style={styles.menuButton}
+              >
                 <MaterialIcons name="menu" size={32} color={COLORS.white} />
               </TouchableOpacity>
-              <MaterialIcons 
-                name="code" 
-                size={38} 
-                color={COLORS.primary} 
-                style={styles.logoIcon}
-              />
+              <MaterialIcons name="code" size={38} color={COLORS.primary} style={styles.logoIcon} />
               <Text style={styles.title}>
                 <Text style={{ color: COLORS.primary }}>CP</Text>
                 <Text style={{ color: COLORS.white }}> Companion</Text>
@@ -90,74 +95,106 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Menu Modal */}
+          {/* Mobile Menu */}
           {menuVisible && (
             <View style={styles.menuOverlay}>
-              <View style={styles.menuContainer}>
-                {/* Menu Header with Close Button */}
-                <View style={styles.menuHeader}>
-                  <Text style={styles.menuTitle}>Menu</Text>
+              <View style={[
+                styles.menuContainer,
+                isPortrait ? styles.menuContainerPortrait : styles.menuContainerLandscape
+              ]}>
+                <LinearGradient 
+                  colors={[COLORS.primary, COLORS.secondary]} 
+                  style={styles.menuHeader}
+                >
+                  <View style={styles.menuHeaderContent}>
+                    <MaterialIcons name="menu" size={28} color={COLORS.white} style={{ marginRight: 10 }} />
+                    <Text style={styles.menuTitle}>Menu</Text>
+                  </View>
                   <TouchableOpacity 
-                    onPress={() => setMenuVisible(false)}
+                    onPress={() => setMenuVisible(false)} 
                     style={styles.closeButton}
+                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
                   >
                     <MaterialIcons name="close" size={24} color={COLORS.white} />
                   </TouchableOpacity>
-                </View>
+                </LinearGradient>
 
-                {/* Menu Items */}
-                <View style={styles.menuItemsContainer}>
+                <ScrollView 
+                  style={styles.menuItemsContainer}
+                  contentContainerStyle={styles.menuItemsContent}
+                >
                   {menuItems.map((item, idx) => (
                     <TouchableOpacity
                       key={idx}
-                      style={styles.menuItem}
+                      style={[
+                        styles.menuItem,
+                        idx === menuItems.length - 1 && styles.signOutItem
+                      ]}
                       onPress={() => {
                         setMenuVisible(false);
                         if (item.route) router.push(item.route as any);
                         if (item.action) item.action();
                       }}
                     >
-                      <View style={styles.menuIconContainer}>
-                        <MaterialIcons 
-                          name={item.icon} 
-                          size={22} 
-                          color={COLORS.primary} 
+                      <View style={[
+                        styles.menuIconContainer,
+                        {
+                          backgroundColor: idx === menuItems.length - 1 
+                            ? 'rgba(255, 99, 71, 0.2)' 
+                            : 'rgba(255, 255, 255, 0.2)',
+                        },
+                      ]}>
+                        <MaterialIcons
+                          name={item.icon}
+                          size={22}
+                          color={idx === menuItems.length - 1 ? '#FF6347' : COLORS.white}
                         />
                       </View>
                       <Text style={styles.menuItemText}>{item.label}</Text>
                       <MaterialIcons 
                         name="chevron-right" 
                         size={20} 
-                        color={COLORS.translucentWhite} 
+                        color={idx === menuItems.length - 1 ? '#FF6347' : COLORS.translucentWhite} 
                       />
                     </TouchableOpacity>
                   ))}
-                </View>
+                </ScrollView>
               </View>
-              {/* Transparent area to close menu */}
               <TouchableOpacity 
-                style={{ flex: 1 }} 
-                onPress={() => setMenuVisible(false)} 
+                style={styles.menuOverlayTouchable} 
+                onPress={() => setMenuVisible(false)}
+                activeOpacity={1}
               />
             </View>
           )}
 
           <SignedIn>
-            {/* Feature Sections */}
+            {/* Main Features Grid */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Main Features</Text>
               <View style={styles.gridContainer}>
                 {mainFeatures.map((item, index) => (
-                  <FeatureCard key={index} feature={item} onPress={() => router.push(item.route as any)} />
+                  <View key={index} style={[styles.cardContainer, { width: CARD_WIDTH }]}>
+                    <FeatureCard 
+                      feature={item} 
+                      onPress={() => router.push(item.route as any)}
+                    />
+                  </View>
                 ))}
               </View>
             </View>
 
+            {/* Upcoming Features Grid */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Upcoming Features</Text>
               <View style={styles.gridContainer}>
                 {upcomingFeatures.map((item, index) => (
-                  <FeatureCard key={index} feature={item} onPress={() => router.push(item.route as any)} />
+                  <View key={index} style={[styles.cardContainer, { width: CARD_WIDTH }]}>
+                    <FeatureCard 
+                      feature={item} 
+                      onPress={() => router.push(item.route as any)}
+                    />
+                  </View>
                 ))}
               </View>
             </View>
@@ -170,7 +207,7 @@ export default function HomeScreen() {
                   <Text style={styles.buttonText}>Sign In</Text>
                 </TouchableOpacity>
               </Link>
-              
+
               <View style={styles.footer}>
                 <Text style={styles.footerText}>Don't have an account? </Text>
                 <Link href="/(auth)/sign-up" asChild>
@@ -187,7 +224,7 @@ export default function HomeScreen() {
   );
 }
 
-const FeatureCard = ({ feature, onPress }: { feature: Feature, onPress: () => void }) => (
+const FeatureCard = ({ feature, onPress }: { feature: Feature; onPress: () => void }) => (
   <TouchableOpacity onPress={onPress} style={styles.cardWrapper}>
     <LinearGradient 
       colors={feature.colors} 
@@ -196,7 +233,7 @@ const FeatureCard = ({ feature, onPress }: { feature: Feature, onPress: () => vo
       style={styles.featureCard}
     >
       <View style={styles.cardContent}>
-        <MaterialIcons name={feature.icon} size={35} color="white" />
+        <MaterialIcons name={feature.icon} size={32} color="white" />
         <Text style={styles.cardText}>{feature.label}</Text>
       </View>
     </LinearGradient>
@@ -204,76 +241,73 @@ const FeatureCard = ({ feature, onPress }: { feature: Feature, onPress: () => vo
 );
 
 const styles = StyleSheet.create({
-  gradient: {
+  gradient: { 
     flex: 1,
   },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
-    paddingTop: 40,
+  scrollContainer: { 
+    flexGrow: 1, 
+    paddingHorizontal: 15,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
-  content: {
-    alignItems: 'center',
+  content: { 
     width: '100%',
   },
-  header: {
+  header: { 
+    marginBottom: 25,
+  },
+  headerRow: { 
+    flexDirection: 'row', 
     alignItems: 'center',
-    marginBottom: 40,
-    width: '100%',
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    marginBottom: 12,
+  menuButton: {
+    marginRight: 20,
   },
-  logoIcon: {
-    marginRight: 2,
+  logoIcon: { 
+    marginRight: 6,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: COLORS.white,
-    letterSpacing: 1.2,
+  title: { 
+    fontSize: 30, 
+    fontWeight: '800', 
+    color: COLORS.white, 
+    letterSpacing: 0.5,
   },
-  section: {
-    width: '100%',
+  section: { 
     marginBottom: 32,
-    maxWidth: 600,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: COLORS.white,
-    marginBottom: 20,
-    paddingLeft: 12,
+    marginBottom: 16,
+    paddingLeft: 8,
     borderLeftWidth: 4,
     borderLeftColor: COLORS.accent2,
   },
-  gridContainer: {
-    flexDirection: 'row',
+  gridContainer: { 
+    flexDirection: 'row', 
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 16,
+    justifyContent: 'space-between',
+    gap: CARD_GAP,
+  },
+  cardContainer: {
+    marginBottom: CARD_GAP,
   },
   cardWrapper: {
-    width: '45%',
-    minWidth: 150,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
+    aspectRatio: 1,
   },
   featureCard: {
-    padding: 20,
-    borderRadius: 12,
-    height: 120,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 16,
   },
   cardContent: {
     alignItems: 'center',
@@ -304,23 +338,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
-  buttonText: {
-    color: COLORS.white,
-    fontWeight: '600',
+  buttonText: { 
+    color: COLORS.white, 
+    fontWeight: '600', 
     fontSize: 16,
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  footer: { 
+    flexDirection: 'row', 
+    justifyContent: 'center', 
     width: '100%',
   },
-  footerText: {
-    color: COLORS.translucentWhite,
+  footerText: { 
+    color: COLORS.translucentWhite, 
     fontSize: 14,
   },
-  footerLink: {
-    color: COLORS.accent2,
-    fontWeight: '600',
+  footerLink: { 
+    color: COLORS.accent2, 
+    fontWeight: '600', 
     fontSize: 14,
   },
   menuOverlay: {
@@ -329,55 +363,84 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.8)',
     flexDirection: 'row',
     zIndex: 100,
   },
+  menuOverlayTouchable: {
+    flex: 1,
+  },
   menuContainer: {
     backgroundColor: COLORS.darkBg,
-    width: '75%',
-    maxWidth: 300,
     height: '100%',
     borderRightWidth: 1,
     borderRightColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 5, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  menuContainerPortrait: {
+    width: '85%',
+    maxWidth: 320,
+  },
+  menuContainerLandscape: {
+    width: '60%',
+    maxWidth: 400,
   },
   menuHeader: {
+    padding: 14,
+    paddingTop: 20,
+    paddingBottom: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
+  menuHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   menuTitle: {
     color: COLORS.white,
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
   closeButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.32)',
   },
   menuItemsContainer: {
-    paddingVertical: 10,
+    flex: 1,
+  },
+  menuItemsContent: {
+    paddingVertical: 16,
+    paddingBottom: 40,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.05)',
   },
+  signOutItem: {
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    paddingTop: 20,
+  },
   menuIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(58, 89, 209, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 16,
   },
   menuItemText: {
     color: COLORS.white,

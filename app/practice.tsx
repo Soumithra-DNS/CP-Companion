@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-export default function PracticeScreen() {
+export default function ProgressScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Practice Page</Text>

@@ -14,7 +14,7 @@ const HomeLayout: FC = () => {
     return <Redirect href="/welcome" />;
   }
 
-  return <Stack />;
+  return <Stack screenOptions={{ headerShown: false }} />;
 };
 
 export default HomeLayout;
