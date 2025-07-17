@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator, Linking, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -9,40 +9,44 @@ const { width } = Dimensions.get('window');
 const CARD_GAP = 16;
 const CARD_WIDTH = (width - 48) / 2; // 32 total padding + 16 gap
 
-// Color palette matching the HomeScreen design
+// Classic color palette
 const COLORS = {
-  primary: '#3A59D1',
-  secondary: '#3D90D7',
-  accent1: '#7AC6D2',
-  accent2: '#B5FCCD',
-  darkBg: '#0f172a',
-  white: '#ffffff',
-  translucentWhite: 'rgba(255, 255, 255, 0.7)',
-  cardBg: 'rgba(255, 255, 255, 0.08)',
-  highlight: '#e74c3c'
+  primary: '#3498db',
+  secondary: '#2ecc71',
+  accent: '#e74c3c',
+  darkBg: '#2c3e50',
+  lightBg: '#34495e',
+  white: '#ecf0f1',
+  gray: '#bdc3c7',
+  highlight: '#f1c40f',
+  error: '#e74c3c',
+  success: '#2ecc71'
 };
 
-type PlatformKey = 'codeforces' | 'codechef' | 'leetcode' | 'atcoder';
+type PlatformKey = 'codeforces' | 'codechef' | 'leetcode';
 
-// Platform data with colors and icons
+// Platform data with valid MaterialIcons
 const PLATFORM_DATA: Record<PlatformKey, {
   color: string;
   icon: keyof typeof MaterialIcons.glyphMap;
   platformName: string;
   api: string;
   query?: string;
+  enabled: boolean;
 }> = {
   codeforces: {
     color: '#FF5722',
     icon: 'code',
     platformName: 'Codeforces',
-    api: 'https://codeforces.com/api/contest.list'
+    api: 'https://codeforces.com/api/contest.list',
+    enabled: true
   },
   codechef: {
     color: '#8BC34A',
     icon: 'restaurant',
     platformName: 'CodeChef',
-    api: 'https://www.codechef.com/api/list/contests/all'
+    api: 'https://www.codechef.com/api/list/contests/all',
+    enabled: true
   },
   leetcode: {
     color: '#FFA500',
@@ -56,13 +60,8 @@ const PLATFORM_DATA: Record<PlatformKey, {
         startTime
         duration
       }
-    }`
-  },
-  atcoder: {
-    color: '#9C27B0',
-    icon: 'alpha-a',
-    platformName: 'AtCoder',
-    api: 'https://kenkoooo.com/atcoder/atcoder-api/v3/contest/upcoming'
+    }`,
+    enabled: true
   }
 };
 
@@ -78,87 +77,105 @@ type Contest = {
   platformName: string;
 };
 
+type ContestStatus = 'upcoming' | 'live' | 'completed';
+
 const ContestTimeScreen = () => {
   const router = useRouter();
   const [contests, setContests] = useState<Contest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(new Date());
   const [error, setError] = useState<string | null>(null);
-  const [menuVisible, setMenuVisible] = useState(false);
+  const [platformErrors, setPlatformErrors] = useState<Record<PlatformKey, string | null>>({
+    codeforces: null,
+    codechef: null,
+    leetcode: null
+  });
 
-  const fetchContests = async () => {
+  const fetchContests = useCallback(async () => {
     setRefreshing(true);
     setError(null);
+    setPlatformErrors({
+      codeforces: null,
+      codechef: null,
+      leetcode: null
+    });
+
     try {
-      const fetchedContests = await Promise.all([
-        fetchCodeforcesContests(),
-        fetchCodechefContests(),
-        fetchLeetcodeContests(),
-        fetchAtcoderContests()
-      ]);
-      
-      // Combine and sort all contests by start time
+      const platformPromises = Object.entries(PLATFORM_DATA)
+        .filter(([_, data]) => data.enabled)
+        .map(async ([platformKey, data]) => {
+          const key = platformKey as PlatformKey;
+          try {
+            switch (key) {
+              case 'codeforces': return await fetchCodeforcesContests();
+              case 'codechef': return await fetchCodechefContests();
+              case 'leetcode': return await fetchLeetcodeContests();
+              default: return [];
+            }
+          } catch (err) {
+            console.error(`Error fetching ${key} contests:`, err);
+            setPlatformErrors(prev => ({
+              ...prev,
+              [key]: `Failed to fetch ${data.platformName} contests`
+            }));
+            return [];
+          }
+        });
+
+      const fetchedContests = await Promise.all(platformPromises);
       const allContests = fetchedContests.flat()
         .filter((contest): contest is Contest => contest !== null)
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
       
       setContests(allContests);
-      setLastUpdated(new Date());
     } catch (err) {
-      console.error('Fetch error:', err);
-      setError('Failed to fetch some contests. Showing partial data.');
+      console.error('Global fetch error:', err);
+      setError('Failed to fetch contests. Please try again.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
-  const fetchCodeforcesContests = async (): Promise<(Contest | null)[]> => {
+  // Platform-specific fetch functions
+  const fetchCodeforcesContests = async (): Promise<Contest[]> => {
     try {
       const response = await axios.get(PLATFORM_DATA.codeforces.api);
-      const contests = response.data.result
+      if (response.data.status !== 'OK') throw new Error('API returned non-OK status');
+      
+      return response.data.result
         .filter((contest: any) => contest.phase === 'BEFORE' || contest.phase === 'CODING')
-        .map((contest: any) => {
-          const startTime = new Date(contest.startTimeSeconds * 1000);
-          const endTime = new Date((contest.startTimeSeconds + contest.durationSeconds) * 1000);
-          
-          return {
-            id: `codeforces-${contest.id}`,
-            platform: 'codeforces',
-            name: contest.name,
-            startTime,
-            endTime,
-            url: `https://codeforces.com/contests/${contest.id}`,
-            color: PLATFORM_DATA.codeforces.color,
-            icon: PLATFORM_DATA.codeforces.icon,
-            platformName: PLATFORM_DATA.codeforces.platformName
-          };
-        });
-      return contests;
+        .map((contest: any) => ({
+          id: `codeforces-${contest.id}`,
+          platform: 'codeforces',
+          name: contest.name,
+          startTime: new Date(contest.startTimeSeconds * 1000),
+          endTime: new Date((contest.startTimeSeconds + contest.durationSeconds) * 1000),
+          url: `https://codeforces.com/contests/${contest.id}`,
+          color: PLATFORM_DATA.codeforces.color,
+          icon: PLATFORM_DATA.codeforces.icon,
+          platformName: PLATFORM_DATA.codeforces.platformName
+        }));
     } catch (error) {
       console.error('Error fetching Codeforces contests:', error);
-      return [];
+      throw error;
     }
   };
 
-  const fetchCodechefContests = async (): Promise<(Contest | null)[]> => {
+  const fetchCodechefContests = async (): Promise<Contest[]> => {
     try {
       const response = await axios.get(PLATFORM_DATA.codechef.api);
       const contests: Contest[] = [];
       
-      // Current contests
+      // Process present contests
       if (response.data.present_contests) {
         response.data.present_contests.forEach((contest: any) => {
-          const startTime = new Date(contest.contest_start_date);
-          const endTime = new Date(contest.contest_end_date);
-          
           contests.push({
             id: `codechef-present-${contest.contest_code}`,
             platform: 'codechef',
             name: contest.contest_name,
-            startTime,
-            endTime,
+            startTime: new Date(contest.contest_start_date),
+            endTime: new Date(contest.contest_end_date),
             url: `https://www.codechef.com/${contest.contest_code}`,
             color: PLATFORM_DATA.codechef.color,
             icon: PLATFORM_DATA.codechef.icon,
@@ -167,18 +184,15 @@ const ContestTimeScreen = () => {
         });
       }
       
-      // Future contests
+      // Process future contests
       if (response.data.future_contests) {
         response.data.future_contests.forEach((contest: any) => {
-          const startTime = new Date(contest.contest_start_date);
-          const endTime = new Date(contest.contest_end_date);
-          
           contests.push({
             id: `codechef-future-${contest.contest_code}`,
             platform: 'codechef',
             name: contest.contest_name,
-            startTime,
-            endTime,
+            startTime: new Date(contest.contest_start_date),
+            endTime: new Date(contest.contest_end_date),
             url: `https://www.codechef.com/${contest.contest_code}`,
             color: PLATFORM_DATA.codechef.color,
             icon: PLATFORM_DATA.codechef.icon,
@@ -190,78 +204,63 @@ const ContestTimeScreen = () => {
       return contests;
     } catch (error) {
       console.error('Error fetching CodeChef contests:', error);
-      return [];
+      throw error;
     }
   };
 
-  const fetchLeetcodeContests = async (): Promise<(Contest | null)[]> => {
+  const fetchLeetcodeContests = async (): Promise<Contest[]> => {
     try {
       const response = await axios.post(PLATFORM_DATA.leetcode.api, {
         query: PLATFORM_DATA.leetcode.query
       });
       
-      return response.data.data.allContests.map((contest: any) => {
-        const startTime = new Date(contest.startTime * 1000);
-        const endTime = new Date((contest.startTime + contest.duration) * 1000);
-        
-        return {
-          id: `leetcode-${contest.titleSlug}`,
-          platform: 'leetcode',
-          name: contest.title,
-          startTime,
-          endTime,
-          url: `https://leetcode.com/contest/${contest.titleSlug}`,
-          color: PLATFORM_DATA.leetcode.color,
-          icon: PLATFORM_DATA.leetcode.icon,
-          platformName: PLATFORM_DATA.leetcode.platformName
-        };
-      });
+      return response.data.data.allContests.map((contest: any) => ({
+        id: `leetcode-${contest.titleSlug}`,
+        platform: 'leetcode',
+        name: contest.title,
+        startTime: new Date(contest.startTime * 1000),
+        endTime: new Date((contest.startTime + contest.duration) * 1000),
+        url: `https://leetcode.com/contest/${contest.titleSlug}`,
+        color: PLATFORM_DATA.leetcode.color,
+        icon: PLATFORM_DATA.leetcode.icon,
+        platformName: PLATFORM_DATA.leetcode.platformName
+      }));
     } catch (error) {
       console.error('Error fetching LeetCode contests:', error);
-      return [];
+      throw error;
     }
   };
 
-  const fetchAtcoderContests = async (): Promise<(Contest | null)[]> => {
-    try {
-      const response = await axios.get(PLATFORM_DATA.atcoder.api);
-      
-      return response.data.map((contest: any) => {
-        const startTime = new Date(contest.start_time);
-        const endTime = new Date(contest.start_time);
-        endTime.setSeconds(endTime.getSeconds() + contest.duration);
-        
-        return {
-          id: `atcoder-${contest.id}`,
-          platform: 'atcoder',
-          name: contest.title,
-          startTime,
-          endTime,
-          url: `https://atcoder.jp/contests/${contest.id}`,
-          color: PLATFORM_DATA.atcoder.color,
-          icon: PLATFORM_DATA.atcoder.icon,
-          platformName: PLATFORM_DATA.atcoder.platformName
-        };
-      });
-    } catch (error) {
-      console.error('Error fetching AtCoder contests:', error);
-      return [];
-    }
-  };
+  // Process contests data
+  const { upcomingContests, liveContests, pastContests } = useMemo(() => {
+    const now = new Date();
+    const upcoming: Contest[] = [];
+    const live: Contest[] = [];
+    const past: Contest[] = [];
+
+    contests.forEach(contest => {
+      if (contest.startTime > now) {
+        upcoming.push(contest);
+      } else if (contest.endTime > now) {
+        live.push(contest);
+      } else {
+        past.push(contest);
+      }
+    });
+
+    return {
+      upcomingContests: upcoming,
+      liveContests: live,
+      pastContests: past.reverse() // Most recent first
+    };
+  }, [contests]);
 
   useEffect(() => {
     fetchContests();
-  }, []);
+  }, [fetchContests]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setLastUpdated(new Date());
-    }, 60000); // Update every minute
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatDate = (date: Date) => {
+  // Helper functions
+  const formatDate = useCallback((date: Date) => {
     return date.toLocaleString('en-US', { 
       month: 'short', 
       day: 'numeric', 
@@ -269,9 +268,9 @@ const ContestTimeScreen = () => {
       minute: '2-digit',
       hour12: true 
     });
-  };
+  }, []);
 
-  const calculateTimeRemaining = (targetTime: Date) => {
+  const calculateTimeRemaining = useCallback((targetTime: Date) => {
     const now = new Date();
     const diff = targetTime.getTime() - now.getTime();
     
@@ -286,20 +285,20 @@ const ContestTimeScreen = () => {
       return `${days}d ${hours}h ${minutes}m`;
     }
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  };
+  }, []);
 
-  const getContestStatus = (startTime: Date, endTime: Date) => {
+  const getContestStatus = useCallback((startTime: Date, endTime: Date): ContestStatus => {
     const now = new Date();
     if (now < startTime) return 'upcoming';
     if (now >= startTime && now <= endTime) return 'live';
     return 'completed';
-  };
+  }, []);
 
-  const openContest = (url: string) => {
+  const openContest = useCallback((url: string) => {
     Linking.openURL(url).catch(err => console.error("Failed to open URL:", err));
-  };
+  }, []);
 
-  const getDurationString = (startTime: Date, endTime: Date) => {
+  const getDurationString = useCallback((startTime: Date, endTime: Date) => {
     const durationHours = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60));
     if (durationHours < 1) {
       const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
@@ -310,33 +309,113 @@ const ContestTimeScreen = () => {
       const durationDays = Math.round(durationHours / 24);
       return `${durationDays}d`;
     }
-  };
+  }, []);
+
+  const renderContestCard = useCallback((contest: Contest) => {
+    const status = getContestStatus(contest.startTime, contest.endTime);
+    const isLive = status === 'live';
+    const isUpcoming = status === 'upcoming';
+    
+    return (
+      <TouchableOpacity 
+        key={contest.id}
+        style={[
+          styles.contestCard,
+          isLive && styles.liveCard,
+          isUpcoming && styles.upcomingCard
+        ]}
+        onPress={() => openContest(contest.url)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.cardHeader}>
+          <View style={styles.platformInfo}>
+            <MaterialIcons name={contest.icon} size={20} color={contest.color} />
+            <Text style={[styles.platform, { color: contest.color }]}>{contest.platformName}</Text>
+          </View>
+          <View style={[
+            styles.statusBadge,
+            isLive && styles.liveBadge,
+            isUpcoming && styles.upcomingBadge
+          ]}>
+            <Text style={styles.statusText}>
+              {isLive ? 'LIVE' : isUpcoming ? 'UPCOMING' : 'COMPLETED'}
+            </Text>
+          </View>
+        </View>
+        
+        <Text style={styles.contestName} numberOfLines={2}>{contest.name}</Text>
+        
+        <View style={styles.timeInfoContainer}>
+          <View style={styles.timeRow}>
+            <MaterialIcons name="calendar-today" size={14} color={COLORS.gray} />
+            <Text style={styles.timeText}>{formatDate(contest.startTime)}</Text>
+          </View>
+          
+          <View style={styles.timeRow}>
+            <MaterialIcons name="timer" size={14} color={COLORS.gray} />
+            <Text style={styles.timeText}>
+              {isLive ? 'Ends: ' : 'Starts: '} 
+              {calculateTimeRemaining(isLive ? contest.endTime : contest.startTime)}
+            </Text>
+          </View>
+        </View>
+        
+        {isLive && (
+          <View style={styles.progressBarContainer}>
+            <View style={styles.progressBarBackground}>
+              <LinearGradient 
+                colors={[contest.color, COLORS.highlight]}
+                start={[0, 0]}
+                end={[1, 0]}
+                style={[
+                  styles.progressBarFill,
+                  { 
+                    width: `${Math.min(
+                      100, 
+                      ((new Date().getTime() - contest.startTime.getTime()) / 
+                      (contest.endTime.getTime() - contest.startTime.getTime())) * 100
+                    )}%`
+                  }
+                ]}
+              />
+            </View>
+          </View>
+        )}
+        
+        <View style={styles.cardFooter}>
+          <View style={styles.durationContainer}>
+            <MaterialIcons name="hourglass-bottom" size={14} color={COLORS.gray} />
+            <Text style={styles.durationText}>
+              {getDurationString(contest.startTime, contest.endTime)}
+            </Text>
+          </View>
+          <MaterialIcons name="launch" size={16} color={COLORS.gray} />
+        </View>
+      </TouchableOpacity>
+    );
+  }, [getContestStatus, openContest, formatDate, calculateTimeRemaining, getDurationString]);
 
   if (loading) {
     return (
-      <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={[styles.container, styles.loadingContainer]}>
+      <View style={[styles.container, styles.loadingContainer]}>
         <ActivityIndicator size="large" color={COLORS.primary} />
         <Text style={styles.loadingText}>Loading contests...</Text>
-      </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.container}>
-      {/* Header - Matching HomeScreen style */}
+    <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <TouchableOpacity 
             onPress={() => router.back()} 
             style={styles.menuButton}
           >
-            <MaterialIcons name="arrow-back" size={32} color={COLORS.white} />
+            <MaterialIcons name="arrow-back" size={28} color={COLORS.white} />
           </TouchableOpacity>
-          <MaterialIcons name="access-time" size={38} color={COLORS.primary} style={styles.logoIcon} />
-          <Text style={styles.title}>
-            <Text style={{ color: COLORS.primary }}>Contest</Text>
-            <Text style={{ color: COLORS.white }}> Time</Text>
-          </Text>
+          <MaterialIcons name="schedule" size={28} color={COLORS.primary} style={styles.logoIcon} />
+          <Text style={styles.title}>Contest Schedule</Text>
         </View>
       </View>
 
@@ -350,135 +429,73 @@ const ContestTimeScreen = () => {
             tintColor={COLORS.primary}
           />
         }
+        contentContainerStyle={styles.scrollContent}
       >
-        {/* Error Banner */}
         {error && (
           <View style={styles.errorBanner}>
             <MaterialIcons name="error" size={18} color={COLORS.white} />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
-        
-        {/* Contests List */}
-        {contests.length === 0 ? (
-          <View style={styles.emptyState}>
-            <MaterialIcons name="calendar-today" size={50} color={COLORS.translucentWhite} />
-            <Text style={styles.emptyText}>No contests scheduled</Text>
-            <Text style={styles.emptySubText}>Check back later for updates</Text>
-          </View>
-        ) : (
-          contests.map((contest) => {
-            const status = getContestStatus(contest.startTime, contest.endTime);
-            const isLive = status === 'live';
-            const isUpcoming = status === 'upcoming';
-            
-            return (
-              <TouchableOpacity 
-                key={contest.id}
-                style={[
-                  styles.contestCard,
-                  isLive && styles.liveCard,
-                  isUpcoming && styles.upcomingCard
-                ]}
-                onPress={() => openContest(contest.url)}
-                activeOpacity={0.8}
-              >
-                {/* Card Header */}
-                <View style={styles.cardHeader}>
-                  <View style={styles.platformInfo}>
-                    <MaterialIcons name={contest.icon} size={20} color={contest.color} />
-                    <Text style={[styles.platform, { color: contest.color }]}>{contest.platformName}</Text>
-                  </View>
-                  <View style={[
-                    styles.statusBadge,
-                    isLive && styles.liveBadge,
-                    isUpcoming && styles.upcomingBadge
-                  ]}>
-                    <Text style={styles.statusText}>
-                      {isLive ? 'LIVE' : isUpcoming ? 'UPCOMING' : 'COMPLETED'}
-                    </Text>
-                  </View>
-                </View>
-                
-                {/* Contest Name */}
-                <Text style={styles.contestName}>{contest.name}</Text>
-                
-                {/* Time Info */}
-                <View style={styles.timeInfoContainer}>
-                  <View style={styles.timeRow}>
-                    <MaterialIcons name="calendar-today" size={14} color={COLORS.translucentWhite} />
-                    <Text style={styles.timeText}>{formatDate(contest.startTime)}</Text>
-                  </View>
-                  
-                  <View style={styles.timeRow}>
-                    <MaterialIcons name="timer" size={14} color={COLORS.translucentWhite} />
-                    <Text style={styles.timeText}>
-                      {isLive ? 'Ends: ' : 'Starts: '} 
-                      {calculateTimeRemaining(isLive ? contest.endTime : contest.startTime)}
-                    </Text>
-                  </View>
-                </View>
-                
-                {/* Progress Bar */}
-                {isLive && (
-                  <View style={styles.progressBarContainer}>
-                    <View style={styles.progressBarBackground}>
-                      <LinearGradient 
-                        colors={[contest.color, COLORS.accent2]}
-                        start={[0, 0]}
-                        end={[1, 0]}
-                        style={[
-                          styles.progressBarFill,
-                          { 
-                            width: `${Math.min(
-                              100, 
-                              ((new Date().getTime() - contest.startTime.getTime()) / 
-                              (contest.endTime.getTime() - contest.startTime.getTime())) * 100
-                            )}%`
-                          }
-                        ]}
-                      />
-                    </View>
-                  </View>
-                )}
-                
-                {/* Card Footer */}
-                <View style={styles.cardFooter}>
-                  <View style={styles.durationContainer}>
-                    <MaterialIcons name="hourglass-bottom" size={14} color={COLORS.translucentWhite} />
-                    <Text style={styles.durationText}>
-                      {getDurationString(contest.startTime, contest.endTime)}
-                    </Text>
-                  </View>
-                  <MaterialIcons name="launch" size={16} color={COLORS.translucentWhite} />
-                </View>
-              </TouchableOpacity>
-            );
-          })
-        )}
+
+        {Object.entries(platformErrors).map(([platformKey, errorMsg]) => {
+          if (!errorMsg) return null;
+          const platform = PLATFORM_DATA[platformKey as PlatformKey];
+          return (
+            <View key={platformKey} style={styles.platformError}>
+              <MaterialIcons name={platform.icon} size={16} color={platform.color} />
+              <Text style={styles.platformErrorText}>{errorMsg}</Text>
+            </View>
+          );
+        })}
+
+        {/* Live Contests Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Live Contests</Text>
+          {liveContests.length > 0 ? (
+            liveContests.map(renderContestCard)
+          ) : (
+            <View style={styles.emptySection}>
+              <MaterialIcons name="live-tv" size={24} color={COLORS.gray} />
+              <Text style={styles.emptySectionText}>No live contests at the moment</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Upcoming Contests Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Upcoming Contests</Text>
+          {upcomingContests.length > 0 ? (
+            upcomingContests.map(renderContestCard)
+          ) : (
+            <View style={styles.emptySection}>
+              <MaterialIcons name="schedule" size={24} color={COLORS.gray} />
+              <Text style={styles.emptySectionText}>No upcoming contests scheduled</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Past Contests Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Past Contests</Text>
+          {pastContests.length > 0 ? (
+            pastContests.map(renderContestCard)
+          ) : (
+            <View style={styles.emptySection}>
+              <MaterialIcons name="history" size={24} color={COLORS.gray} />
+              <Text style={styles.emptySectionText}>No past contests to show</Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
-      
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.lastUpdated}>
-          <MaterialIcons name="update" size={12} color={COLORS.translucentWhite} /> 
-          Updated: {formatDate(lastUpdated)}
-        </Text>
-        <TouchableOpacity 
-          onPress={fetchContests} 
-          style={styles.refreshButton}
-          activeOpacity={0.7}
-        >
-          <MaterialIcons name="refresh" size={16} color={COLORS.primary} />
-        </TouchableOpacity>
-      </View>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.darkBg,
   },
   loadingContainer: {
     justifyContent: 'center',
@@ -491,75 +508,97 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 10,
+    paddingBottom: 20,
   },
   header: {
-    marginBottom: 15,
-    paddingHorizontal: 16,
-    paddingTop: 20,
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightBg,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   menuButton: {
-    marginRight: 20,
+    marginRight: 16,
   },
   logoIcon: {
-    marginRight: 6,
+    marginRight: 12,
   },
   title: {
-    fontSize: 30,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: 'bold',
     color: COLORS.white,
-    letterSpacing: 0.5,
   },
   errorBanner: {
-    backgroundColor: COLORS.highlight,
+    backgroundColor: COLORS.error,
     padding: 12,
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 16,
   },
   errorText: {
     color: COLORS.white,
     fontSize: 14,
     marginLeft: 8,
-  },
-  emptyState: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  platformError: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 10,
+    borderRadius: 6,
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 40,
-    marginTop: 40,
+    marginBottom: 8,
   },
-  emptyText: {
+  platformErrorText: {
+    color: COLORS.gray,
+    fontSize: 12,
+    marginLeft: 8,
+  },
+  sectionContainer: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
     fontSize: 18,
+    fontWeight: 'bold',
     color: COLORS.white,
-    marginTop: 15,
-    fontWeight: '600',
+    marginBottom: 12,
+    paddingLeft: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
-  emptySubText: {
+  emptySection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    backgroundColor: COLORS.lightBg,
+    borderRadius: 8,
+  },
+  emptySectionText: {
+    color: COLORS.gray,
     fontSize: 14,
-    color: COLORS.translucentWhite,
-    marginTop: 5,
+    marginLeft: 8,
   },
   contestCard: {
     marginBottom: 16,
     padding: 16,
-    borderRadius: 12,
-    backgroundColor: COLORS.cardBg,
+    borderRadius: 8,
+    backgroundColor: COLORS.lightBg,
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.translucentWhite,
+    borderLeftColor: COLORS.gray,
   },
   upcomingCard: {
     borderLeftColor: COLORS.primary,
   },
   liveCard: {
-    borderLeftColor: COLORS.highlight,
+    borderLeftColor: COLORS.accent,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -593,7 +632,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   timeText: {
-    color: COLORS.translucentWhite,
+    color: COLORS.gray,
     fontSize: 13,
     marginLeft: 8,
   },
@@ -620,7 +659,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   durationText: {
-    color: COLORS.translucentWhite,
+    color: COLORS.gray,
     fontSize: 12,
     marginLeft: 6,
   },
@@ -631,7 +670,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   upcomingBadge: {
-    backgroundColor: 'rgba(58, 89, 209, 0.2)',
+    backgroundColor: 'rgba(52, 152, 219, 0.2)',
   },
   liveBadge: {
     backgroundColor: 'rgba(231, 76, 60, 0.2)',
@@ -641,22 +680,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textTransform: 'uppercase',
     color: COLORS.white,
-  },
-  footer: {
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-    backgroundColor: COLORS.darkBg,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  lastUpdated: {
-    color: COLORS.translucentWhite,
-    fontSize: 12,
-  },
-  refreshButton: {
-    padding: 6,
   },
 });
 
