@@ -6,8 +6,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
-const CARD_GAP = 16;
-const CARD_WIDTH = (width - 48) / 2; // 32 total padding + 16 gap
 
 // Classic color palette
 const COLORS = {
@@ -249,9 +247,12 @@ const ContestTimeScreen = () => {
     });
 
     return {
-      upcomingContests: upcoming,
-      liveContests: live,
-      pastContests: past.reverse() // Most recent first
+      // Limit to 10 live contests
+      liveContests: live.slice(0, 10),
+      // Limit to 10 upcoming contests
+      upcomingContests: upcoming.slice(0, 10),
+      // Limit to 10 most recent past contests
+      pastContests: past.sort((a, b) => b.startTime.getTime() - a.startTime.getTime()).slice(0, 10)
     };
   }, [contests]);
 
