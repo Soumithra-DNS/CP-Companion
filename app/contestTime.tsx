@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator, Linking, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
-const { width } = Dimensions.get('window');
-
-// Classic color palette with some new additions for the unified design
+// Classic color palette
 const COLORS = {
   primary: '#3498db',
   secondary: '#2ecc71',
@@ -19,9 +17,9 @@ const COLORS = {
   highlight: '#f1c40f',
   error: '#e74c3c',
   success: '#2ecc71',
-  headerColor: '#A066FF', // A new, clean color for headers
-  cardBg: '#3e5163', // A slightly lighter background for cards
-  textColor: '#ecf0f1', // Text color for better contrast
+  live: '#e74c3c',
+  upcoming: '#3498db',
+  past: '#9b59b6'
 };
 
 type PlatformKey = 'codeforces' | 'codechef' | 'leetcode';
@@ -86,25 +84,15 @@ const ContestTimeScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [platformErrors, setPlatformErrors] = useState<Record<PlatformKey, string | null>>({
-    codeforces: null,
-    codechef: null,
-    leetcode: null
-  });
 
   const fetchContests = useCallback(async () => {
     setRefreshing(true);
     setError(null);
-    setPlatformErrors({
-      codeforces: null,
-      codechef: null,
-      leetcode: null
-    });
 
     try {
       const platformPromises = Object.entries(PLATFORM_DATA)
         .filter(([_, data]) => data.enabled)
-        .map(async ([platformKey, data]) => {
+        .map(async ([platformKey]) => {
           const key = platformKey as PlatformKey;
           try {
             switch (key) {
@@ -115,10 +103,6 @@ const ContestTimeScreen = () => {
             }
           } catch (err) {
             console.error(`Error fetching ${key} contests:`, err);
-            setPlatformErrors(prev => ({
-              ...prev,
-              [key]: `Failed to fetch ${data.platformName} contests`
-            }));
             return [];
           }
         });
@@ -159,7 +143,7 @@ const ContestTimeScreen = () => {
         }));
     } catch (error) {
       console.error('Error fetching Codeforces contests:', error);
-      throw error;
+      return [];
     }
   };
 
@@ -205,7 +189,7 @@ const ContestTimeScreen = () => {
       return contests;
     } catch (error) {
       console.error('Error fetching CodeChef contests:', error);
-      throw error;
+      return [];
     }
   };
 
@@ -228,15 +212,15 @@ const ContestTimeScreen = () => {
       }));
     } catch (error) {
       console.error('Error fetching LeetCode contests:', error);
-      throw error;
+      return [];
     }
   };
 
-  // Process contests data
-  const { upcomingContests, liveContests, pastContests } = useMemo(() => {
+  // Process contests data with limits
+  const { liveContests, upcomingContests, pastContests } = useMemo(() => {
     const now = new Date();
-    const upcoming: Contest[] = [];
     const live: Contest[] = [];
+    const upcoming: Contest[] = [];
     const past: Contest[] = [];
 
     contests.forEach(contest => {
@@ -250,9 +234,9 @@ const ContestTimeScreen = () => {
     });
 
     return {
-      liveContests: live.slice(0, 10),
-      upcomingContests: upcoming.slice(0, 10),
-      pastContests: past.sort((a, b) => b.startTime.getTime() - a.startTime.getTime()).slice(0, 10)
+      liveContests: live.slice(0, 10), // Max 10 live contests
+      upcomingContests: upcoming.slice(0, 10), // Next 10 upcoming contests
+      pastContests: past.slice(-10).reverse() // Last 10 past contests (most recent first)
     };
   }, [contests]);
 
@@ -331,7 +315,7 @@ const ContestTimeScreen = () => {
         <View style={styles.cardHeader}>
           <View style={styles.platformInfo}>
             <MaterialIcons name={contest.icon} size={20} color={contest.color} />
-            <Text style={[styles.platform, { color: COLORS.textColor }]}>{contest.platformName}</Text>
+            <Text style={[styles.platform, { color: contest.color }]}>{contest.platformName}</Text>
           </View>
           <View style={[
             styles.statusBadge,
@@ -396,6 +380,20 @@ const ContestTimeScreen = () => {
     );
   }, [getContestStatus, openContest, formatDate, calculateTimeRemaining, getDurationString]);
 
+  const renderSectionHeader = (title: string, count: number, icon: string, color: string) => {
+    return (
+      <View style={[styles.sectionHeader, { backgroundColor: color }]}>
+        <View style={styles.sectionHeaderContent}>
+          <MaterialIcons name={icon as any} size={20} color={COLORS.white} />
+          <Text style={styles.sectionHeaderText}>{title}</Text>
+          <View style={styles.sectionCountBadge}>
+            <Text style={styles.sectionCountText}>{count}</Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
@@ -439,20 +437,14 @@ const ContestTimeScreen = () => {
           </View>
         )}
 
-        {Object.entries(platformErrors).map(([platformKey, errorMsg]) => {
-          if (!errorMsg) return null;
-          const platform = PLATFORM_DATA[platformKey as PlatformKey];
-          return (
-            <View key={platformKey} style={styles.platformError}>
-              <MaterialIcons name={platform.icon} size={16} color={platform.color} />
-              <Text style={styles.platformErrorText}>{errorMsg}</Text>
-            </View>
-          );
-        })}
-
         {/* Live Contests Section */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Live Contests</Text>
+          {renderSectionHeader(
+            'Live Contests', 
+            liveContests.length, 
+            'live-tv', 
+            COLORS.live
+          )}
           {liveContests.length > 0 ? (
             liveContests.map(renderContestCard)
           ) : (
@@ -465,7 +457,12 @@ const ContestTimeScreen = () => {
 
         {/* Upcoming Contests Section */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Upcoming Contests</Text>
+          {renderSectionHeader(
+            'Upcoming Contests', 
+            upcomingContests.length, 
+            'upcoming', 
+            COLORS.upcoming
+          )}
           {upcomingContests.length > 0 ? (
             upcomingContests.map(renderContestCard)
           ) : (
@@ -478,7 +475,12 @@ const ContestTimeScreen = () => {
 
         {/* Past Contests Section */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Past Contests</Text>
+          {renderSectionHeader(
+            'Past Contests', 
+            pastContests.length, 
+            'history', 
+            COLORS.past
+          )}
           {pastContests.length > 0 ? (
             pastContests.map(renderContestCard)
           ) : (
@@ -549,31 +551,36 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
   },
-  platformError: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    padding: 10,
-    borderRadius: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  platformErrorText: {
-    color: COLORS.gray,
-    fontSize: 12,
-    marginLeft: 8,
-  },
   sectionContainer: {
     marginBottom: 24,
+    borderRadius: 8,
+    overflow: 'hidden',
   },
-  // Unified design for all section titles
-  sectionTitle: {
-    fontSize: 20,
+  sectionHeader: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  sectionHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionHeaderText: {
+    color: COLORS.white,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.headerColor,
-    marginBottom: 12,
-    paddingBottom: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.headerColor,
+    marginLeft: 10,
+  },
+  sectionCountBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 10,
+  },
+  sectionCountText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   emptySection: {
     flexDirection: 'row',
@@ -592,9 +599,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 16,
     borderRadius: 8,
-    backgroundColor: COLORS.cardBg, // Using a unified card background color
+    backgroundColor: COLORS.lightBg,
     borderLeftWidth: 4,
-    borderLeftColor: 'transparent', // The left border will be set dynamically based on status
+    borderLeftColor: COLORS.gray,
   },
   upcomingCard: {
     borderLeftColor: COLORS.primary,
@@ -621,7 +628,7 @@ const styles = StyleSheet.create({
   contestName: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textColor,
+    color: COLORS.white,
     marginBottom: 12,
     lineHeight: 22,
   },
