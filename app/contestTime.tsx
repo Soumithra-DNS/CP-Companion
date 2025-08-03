@@ -1,26 +1,29 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator, Linking, Dimensions, StatusBar } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
-// Updated color palette from ColorHunt
+const { width } = Dimensions.get('window');
+
+// Updated color palette from ColorHunt, aligned with HomeScreen's aesthetic
 const COLORS = {
-  primary: '#4B70F5',    // Vibrant blue
-  secondary: '#4C3BCF',  // Deep purple-blue
-  accent: '#402E7A',     // Dark purple
-  darkBg: '#1A1A2E',     // Dark navy background
-  lightBg: '#16213E',    // Slightly lighter navy for cards
-  white: '#FFFFFF',      // Pure white
-  gray: '#A1A1A1',       // Medium gray
-  highlight: '#3DC2EC',  // Bright cyan
-  error: '#FF6B6B',      // Soft red
-  success: '#4CAF50',    // Green
-  live: '#FF6B6B',       // Red for live contests
-  upcoming: '#4B70F5',   // Blue for upcoming
-  past: '#9C27B0',       // Purple for past
-  sectionBg: '#4C3BCF',  // Section header background
+  primary: '#3A59D1',      // Vibrant blue, from HomeScreen
+  secondary: '#3D90D7',    // Deep purple-blue, from HomeScreen
+  accent1: '#7AC6D2',      // Light blue/cyan, from HomeScreen
+  accent2: '#B5FCCD',      // Light green/cyan, from HomeScreen
+  darkBg: '#0f172a',      // Dark navy background, from HomeScreen
+  lightBg: 'rgba(255, 255, 255, 0.08)', // Card background, from HomeScreen
+  white: '#FFFFFF',        // Pure white
+  gray: 'rgba(255, 255, 255, 0.7)', // Translucent white for secondary text
+  highlight: '#3DC2EC',    // Bright cyan (retained for progress bar)
+  error: '#FF6B6B',        // Soft red
+  success: '#4CAF50',      // Green
+  live: '#FF6B6B',         // Red for live contests (retained)
+  upcoming: '#3A59D1',     // Primary blue for upcoming (aligned with primary)
+  past: '#7AC6D2',         // Accent color for past (aligned with accent1)
+  sectionBg: '#1e293b',    // Section header background (darker shade from HomeScreen gradient)
 };
 
 type PlatformKey = 'codeforces' | 'codechef' | 'leetcode';
@@ -35,21 +38,21 @@ const PLATFORM_DATA: Record<PlatformKey, {
   enabled: boolean;
 }> = {
   codeforces: {
-    color: '#FF5722',    // Keeping orange for Codeforces
+    color: '#FF5722',     // Keeping orange for Codeforces
     icon: 'code',
     platformName: 'Codeforces',
     api: 'https://codeforces.com/api/contest.list',
     enabled: true
   },
   codechef: {
-    color: '#4CAF50',    // Green for CodeChef
+    color: '#4CAF50',     // Green for CodeChef
     icon: 'restaurant',
     platformName: 'CodeChef',
     api: 'https://www.codechef.com/api/list/contests/all',
     enabled: true
   },
   leetcode: {
-    color: '#FFA500',    // Keeping orange for LeetCode
+    color: '#FFA500',     // Keeping orange for LeetCode
     icon: 'code',
     platformName: 'LeetCode',
     api: 'https://leetcode.com/graphql',
@@ -311,106 +314,119 @@ const ContestTimeScreen = () => {
         onPress={() => openContest(contest.url)}
         activeOpacity={0.8}
       >
-        <View style={styles.cardHeader}>
-          <View style={styles.platformInfo}>
-            <MaterialIcons name={contest.icon} size={20} color={contest.color} />
-            <Text style={[styles.platform, { color: contest.color }]}>{contest.platformName}</Text>
-          </View>
-          <View style={[
-            styles.statusBadge,
-            isLive && styles.liveBadge,
-            isUpcoming && styles.upcomingBadge
-          ]}>
-            <Text style={styles.statusText}>
-              {isLive ? 'LIVE' : isUpcoming ? 'UPCOMING' : 'COMPLETED'}
-            </Text>
-          </View>
-        </View>
-        
-        <Text style={styles.contestName} numberOfLines={2}>{contest.name}</Text>
-        
-        <View style={styles.timeInfoContainer}>
-          <View style={styles.timeRow}>
-            <MaterialIcons name="calendar-today" size={14} color={COLORS.gray} />
-            <Text style={styles.timeText}>{formatDate(contest.startTime)}</Text>
-          </View>
-          
-          <View style={styles.timeRow}>
-            <MaterialIcons name="timer" size={14} color={COLORS.gray} />
-            <Text style={styles.timeText}>
-              {isLive ? 'Ends: ' : 'Starts: '} 
-              {calculateTimeRemaining(isLive ? contest.endTime : contest.startTime)}
-            </Text>
-          </View>
-        </View>
-        
-        {isLive && (
-          <View style={styles.progressBarContainer}>
-            <View style={styles.progressBarBackground}>
-              <LinearGradient 
-                colors={[contest.color, COLORS.highlight]}
-                start={[0, 0]}
-                end={[1, 0]}
-                style={[
-                  styles.progressBarFill,
-                  { 
-                    width: `${Math.min(
-                      100, 
-                      ((new Date().getTime() - contest.startTime.getTime()) / 
-                      (contest.endTime.getTime() - contest.startTime.getTime())) * 100
-                    )}%`
-                  }
-                ]}
-              />
+        <LinearGradient
+          colors={isLive ? [COLORS.live, COLORS.error] : isUpcoming ? [COLORS.primary, COLORS.secondary] : [COLORS.accent1, COLORS.accent2]}
+          start={[0, 0]}
+          end={[1, 1]}
+          style={styles.cardGradient}
+        >
+          <View style={styles.cardHeader}>
+            <View style={styles.platformInfo}>
+              <MaterialIcons name={contest.icon} size={20} color={COLORS.white} />
+              <Text style={styles.platform}>{contest.platformName}</Text>
+            </View>
+            <View style={[
+              styles.statusBadge,
+              isLive && styles.liveBadge,
+              isUpcoming && styles.upcomingBadge
+            ]}>
+              <Text style={styles.statusText}>
+                {isLive ? 'LIVE' : isUpcoming ? 'UPCOMING' : 'COMPLETED'}
+              </Text>
             </View>
           </View>
-        )}
-        
-        <View style={styles.cardFooter}>
-          <View style={styles.durationContainer}>
-            <MaterialIcons name="hourglass-bottom" size={14} color={COLORS.gray} />
-            <Text style={styles.durationText}>
-              {getDurationString(contest.startTime, contest.endTime)}
-            </Text>
+          
+          <Text style={styles.contestName} numberOfLines={2}>{contest.name}</Text>
+          
+          <View style={styles.timeInfoContainer}>
+            <View style={styles.timeRow}>
+              <MaterialIcons name="calendar-today" size={14} color={COLORS.gray} />
+              <Text style={styles.timeText}>{formatDate(contest.startTime)}</Text>
+            </View>
+            
+            <View style={styles.timeRow}>
+              <MaterialIcons name="timer" size={14} color={COLORS.gray} />
+              <Text style={styles.timeText}>
+                {isLive ? 'Ends: ' : 'Starts: '} 
+                {calculateTimeRemaining(isLive ? contest.endTime : contest.startTime)}
+              </Text>
+            </View>
           </View>
-          <MaterialIcons name="launch" size={16} color={COLORS.gray} />
-        </View>
+          
+          {isLive && (
+            <View style={styles.progressBarContainer}>
+              <View style={styles.progressBarBackground}>
+                <LinearGradient 
+                  colors={[contest.color, COLORS.highlight]}
+                  start={[0, 0]}
+                  end={[1, 0]}
+                  style={[
+                    styles.progressBarFill,
+                    { 
+                      width: `${Math.min(
+                        100, 
+                        ((new Date().getTime() - contest.startTime.getTime()) / 
+                        (contest.endTime.getTime() - contest.startTime.getTime())) * 100
+                      )}%`
+                    }
+                  ]}
+                />
+              </View>
+            </View>
+          )}
+          
+          <View style={styles.cardFooter}>
+            <View style={styles.durationContainer}>
+              <MaterialIcons name="hourglass-bottom" size={14} color={COLORS.gray} />
+              <Text style={styles.durationText}>
+                {getDurationString(contest.startTime, contest.endTime)}
+              </Text>
+            </View>
+            <MaterialIcons name="launch" size={16} color={COLORS.gray} />
+          </View>
+        </LinearGradient>
       </TouchableOpacity>
     );
   }, [getContestStatus, openContest, formatDate, calculateTimeRemaining, getDurationString]);
 
   const renderSectionHeader = (title: string, count: number, icon: string, color: string) => {
     return (
-      <LinearGradient
-        colors={[color, COLORS.sectionBg]}
-        start={[0, 0]}
-        end={[1, 0]}
-        style={styles.sectionHeader}
-      >
-        <View style={styles.sectionHeaderContent}>
-          <MaterialIcons name={icon as any} size={20} color={COLORS.white} />
-          <Text style={styles.sectionHeaderText}>{title}</Text>
-          <View style={styles.sectionCountBadge}>
-            <Text style={styles.sectionCountText}>{count}</Text>
+      <View style={styles.sectionHeaderContainer}>
+        <LinearGradient
+          colors={[color, COLORS.sectionBg]}
+          start={[0, 0]}
+          end={[1, 0]}
+          style={styles.sectionHeaderGradient}
+        >
+          <View style={styles.sectionHeaderContent}>
+            <MaterialIcons name={icon as any} size={20} color={COLORS.white} />
+            <Text style={styles.sectionHeaderText}>{title}</Text>
+            <View style={styles.sectionCountBadge}>
+              <Text style={styles.sectionCountText}>{count}</Text>
+            </View>
           </View>
-        </View>
-      </LinearGradient>
+        </LinearGradient>
+      </View>
     );
   };
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading contests...</Text>
-      </View>
+      <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Loading contests...</Text>
+        </View>
+      </LinearGradient>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.container}>
+      <StatusBar barStyle="light-content" />
       <LinearGradient
-        colors={[COLORS.accent, COLORS.darkBg]}
+        colors={[COLORS.primary, COLORS.secondary]}
         style={styles.header}
       >
         <View style={styles.headerRow}>
@@ -420,7 +436,7 @@ const ContestTimeScreen = () => {
           >
             <MaterialIcons name="arrow-back" size={28} color={COLORS.white} />
           </TouchableOpacity>
-          <MaterialIcons name="schedule" size={28} color={COLORS.highlight} style={styles.logoIcon} />
+          <MaterialIcons name="schedule" size={28} color={COLORS.accent2} style={styles.logoIcon} />
           <Text style={styles.title}>Contest Schedule</Text>
         </View>
       </LinearGradient>
@@ -445,7 +461,7 @@ const ContestTimeScreen = () => {
         )}
 
         {/* Live Contests Section */}
-        <View style={styles.sectionContainer}>
+        <View style={styles.section}>
           {renderSectionHeader(
             'Live Contests', 
             liveContests.length, 
@@ -463,7 +479,7 @@ const ContestTimeScreen = () => {
         </View>
 
         {/* Upcoming Contests Section */}
-        <View style={styles.sectionContainer}>
+        <View style={styles.section}>
           {renderSectionHeader(
             'Upcoming Contests', 
             upcomingContests.length, 
@@ -481,7 +497,7 @@ const ContestTimeScreen = () => {
         </View>
 
         {/* Past Contests Section */}
-        <View style={styles.sectionContainer}>
+        <View style={styles.section}>
           {renderSectionHeader(
             'Past Contests', 
             pastContests.length, 
@@ -498,16 +514,16 @@ const ContestTimeScreen = () => {
           )}
         </View>
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.darkBg,
   },
   loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -520,29 +536,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 15, // Aligned with HomeScreen's scrollContainer
     paddingTop: 10,
     paddingBottom: 20,
   },
   header: {
     padding: 16,
+    paddingTop: 20, // Adjusted for better spacing
+    paddingBottom: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightBg,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)', // Aligned with HomeScreen's menuHeader
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   menuButton: {
-    marginRight: 16,
+    marginRight: 20, // Aligned with HomeScreen
   },
   logoIcon: {
-    marginRight: 12,
+    marginRight: 6, // Aligned with HomeScreen
   },
   title: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 22, // Slightly smaller than HomeScreen title but still prominent
+    fontWeight: '800', // Aligned with HomeScreen
     color: COLORS.white,
+    letterSpacing: 0.5, // Aligned with HomeScreen
   },
   errorBanner: {
     backgroundColor: COLORS.error,
@@ -551,6 +572,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
+    marginHorizontal: 0, // Ensure it spans full width of scrollContent
   },
   errorText: {
     color: COLORS.white,
@@ -558,15 +580,19 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
   },
-  sectionContainer: {
-    marginBottom: 24,
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: COLORS.lightBg,
+  section: {
+    marginBottom: 32, // Aligned with HomeScreen's section margin
   },
-  sectionHeader: {
+  sectionHeaderContainer: {
+    marginBottom: 16, // Spacing between header and cards
+  },
+  sectionHeaderGradient: {
     paddingVertical: 12,
     paddingHorizontal: 16,
+    borderRadius: 8, // Rounded corners for the header itself
+    overflow: 'hidden',
+    borderLeftWidth: 4, // Aligned with HomeScreen's sectionTitle
+    borderLeftColor: COLORS.accent2, // Aligned with HomeScreen's sectionTitle
   },
   sectionHeaderContent: {
     flexDirection: 'row',
@@ -574,9 +600,10 @@ const styles = StyleSheet.create({
   },
   sectionHeaderText: {
     color: COLORS.white,
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18, // Slightly larger for prominence
+    fontWeight: '700', // Aligned with HomeScreen
     marginLeft: 10,
+    flex: 1, // Allow text to take available space
   },
   sectionCountBadge: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -595,9 +622,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 8,
-    margin: 16,
+    backgroundColor: COLORS.lightBg, // Use cardBg for consistency
+    borderRadius: 16, // Larger border radius for consistency
+    marginHorizontal: 0, // Ensure it spans full width of scrollContent
+    marginTop: 0, // Remove top margin as sectionHeaderContainer handles spacing
+    borderWidth: 1, // Add border for consistency
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   emptySectionText: {
     color: COLORS.gray,
@@ -605,19 +635,25 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   contestCard: {
-    margin: 16,
-    marginTop: 8,
+    marginBottom: 16, // Spacing between cards
+    borderRadius: 16, // Larger border radius for consistency
+    overflow: 'hidden',
+    shadowColor: '#000', // Add shadow for depth
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  cardGradient: {
     padding: 16,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.gray,
+    borderLeftWidth: 4, // Retain border for status indication
+    borderLeftColor: 'transparent', // Will be set dynamically by live/upcomingCard styles
   },
   upcomingCard: {
-    borderLeftColor: COLORS.primary,
+    borderLeftColor: COLORS.primary, // Primary blue for upcoming
   },
   liveCard: {
-    borderLeftColor: COLORS.live,
+    borderLeftColor: COLORS.live, // Red for live
   },
   cardHeader: {
     flexDirection: 'row',
@@ -634,6 +670,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 8,
     textTransform: 'uppercase',
+    color: COLORS.white, // Platform name should also be white for consistency
   },
   contestName: {
     fontSize: 16,
@@ -686,13 +723,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)', // Slightly more opaque for visibility
   },
   upcomingBadge: {
-    backgroundColor: 'rgba(75, 112, 245, 0.2)',
+    backgroundColor: 'rgba(75, 112, 245, 0.2)', // Retain original upcoming color
   },
   liveBadge: {
-    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    backgroundColor: 'rgba(255, 107, 107, 0.2)', // Retain original live color
   },
   statusText: {
     fontSize: 10,
