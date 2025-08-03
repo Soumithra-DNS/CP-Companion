@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
-// Classic color palette
+// Classic color palette with some new additions for the unified design
 const COLORS = {
   primary: '#3498db',
   secondary: '#2ecc71',
@@ -18,7 +18,10 @@ const COLORS = {
   gray: '#bdc3c7',
   highlight: '#f1c40f',
   error: '#e74c3c',
-  success: '#2ecc71'
+  success: '#2ecc71',
+  headerColor: '#A066FF', // A new, clean color for headers
+  cardBg: '#3e5163', // A slightly lighter background for cards
+  textColor: '#ecf0f1', // Text color for better contrast
 };
 
 type PlatformKey = 'codeforces' | 'codechef' | 'leetcode';
@@ -328,7 +331,7 @@ const ContestTimeScreen = () => {
         <View style={styles.cardHeader}>
           <View style={styles.platformInfo}>
             <MaterialIcons name={contest.icon} size={20} color={contest.color} />
-            <Text style={[styles.platform, { color: contest.color }]}>{contest.platformName}</Text>
+            <Text style={[styles.platform, { color: COLORS.textColor }]}>{contest.platformName}</Text>
           </View>
           <View style={[
             styles.statusBadge,
@@ -449,7 +452,7 @@ const ContestTimeScreen = () => {
 
         {/* Live Contests Section */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, styles.liveTitle]}>Live Contests</Text>
+          <Text style={styles.sectionTitle}>Live Contests</Text>
           {liveContests.length > 0 ? (
             liveContests.map(renderContestCard)
           ) : (
@@ -462,7 +465,7 @@ const ContestTimeScreen = () => {
 
         {/* Upcoming Contests Section */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, styles.upcomingTitle]}>Upcoming Contests</Text>
+          <Text style={styles.sectionTitle}>Upcoming Contests</Text>
           {upcomingContests.length > 0 ? (
             upcomingContests.map(renderContestCard)
           ) : (
@@ -475,7 +478,7 @@ const ContestTimeScreen = () => {
 
         {/* Past Contests Section */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, styles.pastTitle]}>Past Contests</Text>
+          <Text style={styles.sectionTitle}>Past Contests</Text>
           {pastContests.length > 0 ? (
             pastContests.map(renderContestCard)
           ) : (
@@ -562,25 +565,15 @@ const styles = StyleSheet.create({
   sectionContainer: {
     marginBottom: 24,
   },
+  // Unified design for all section titles
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: COLORS.white,
+    color: COLORS.headerColor,
     marginBottom: 12,
     paddingBottom: 8,
     borderBottomWidth: 2,
-  },
-  liveTitle: {
-    color: COLORS.accent,
-    borderBottomColor: COLORS.accent,
-  },
-  upcomingTitle: {
-    color: COLORS.primary,
-    borderBottomColor: COLORS.primary,
-  },
-  pastTitle: {
-    color: COLORS.gray,
-    borderBottomColor: COLORS.gray,
+    borderBottomColor: COLORS.headerColor,
   },
   emptySection: {
     flexDirection: 'row',
@@ -599,9 +592,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 16,
     borderRadius: 8,
-    backgroundColor: COLORS.lightBg,
+    backgroundColor: COLORS.cardBg, // Using a unified card background color
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.gray,
+    borderLeftColor: 'transparent', // The left border will be set dynamically based on status
   },
   upcomingCard: {
     borderLeftColor: COLORS.primary,
@@ -628,7 +621,7 @@ const styles = StyleSheet.create({
   contestName: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.white,
+    color: COLORS.textColor,
     marginBottom: 12,
     lineHeight: 22,
   },
