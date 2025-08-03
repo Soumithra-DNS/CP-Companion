@@ -5,26 +5,27 @@ import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
-// Classic color palette
+// Updated color palette from ColorHunt
 const COLORS = {
-  primary: '#3498db',
-  secondary: '#2ecc71',
-  accent: '#e74c3c',
-  darkBg: '#2c3e50',
-  lightBg: '#34495e',
-  white: '#ecf0f1',
-  gray: '#bdc3c7',
-  highlight: '#f1c40f',
-  error: '#e74c3c',
-  success: '#2ecc71',
-  live: '#e74c3c',
-  upcoming: '#3498db',
-  past: '#9b59b6'
+  primary: '#4B70F5',    // Vibrant blue
+  secondary: '#4C3BCF',  // Deep purple-blue
+  accent: '#402E7A',     // Dark purple
+  darkBg: '#1A1A2E',     // Dark navy background
+  lightBg: '#16213E',    // Slightly lighter navy for cards
+  white: '#FFFFFF',      // Pure white
+  gray: '#A1A1A1',       // Medium gray
+  highlight: '#3DC2EC',  // Bright cyan
+  error: '#FF6B6B',      // Soft red
+  success: '#4CAF50',    // Green
+  live: '#FF6B6B',       // Red for live contests
+  upcoming: '#4B70F5',   // Blue for upcoming
+  past: '#9C27B0',       // Purple for past
+  sectionBg: '#4C3BCF',  // Section header background
 };
 
 type PlatformKey = 'codeforces' | 'codechef' | 'leetcode';
 
-// Platform data with valid MaterialIcons
+// Platform data with updated colors
 const PLATFORM_DATA: Record<PlatformKey, {
   color: string;
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -34,21 +35,21 @@ const PLATFORM_DATA: Record<PlatformKey, {
   enabled: boolean;
 }> = {
   codeforces: {
-    color: '#FF5722',
+    color: '#FF5722',    // Keeping orange for Codeforces
     icon: 'code',
     platformName: 'Codeforces',
     api: 'https://codeforces.com/api/contest.list',
     enabled: true
   },
   codechef: {
-    color: '#8BC34A',
+    color: '#4CAF50',    // Green for CodeChef
     icon: 'restaurant',
     platformName: 'CodeChef',
     api: 'https://www.codechef.com/api/list/contests/all',
     enabled: true
   },
   leetcode: {
-    color: '#FFA500',
+    color: '#FFA500',    // Keeping orange for LeetCode
     icon: 'code',
     platformName: 'LeetCode',
     api: 'https://leetcode.com/graphql',
@@ -122,7 +123,7 @@ const ContestTimeScreen = () => {
     }
   }, []);
 
-  // Platform-specific fetch functions
+  // Platform-specific fetch functions remain the same
   const fetchCodeforcesContests = async (): Promise<Contest[]> => {
     try {
       const response = await axios.get(PLATFORM_DATA.codeforces.api);
@@ -152,7 +153,6 @@ const ContestTimeScreen = () => {
       const response = await axios.get(PLATFORM_DATA.codechef.api);
       const contests: Contest[] = [];
       
-      // Process present contests
       if (response.data.present_contests) {
         response.data.present_contests.forEach((contest: any) => {
           contests.push({
@@ -169,7 +169,6 @@ const ContestTimeScreen = () => {
         });
       }
       
-      // Process future contests
       if (response.data.future_contests) {
         response.data.future_contests.forEach((contest: any) => {
           contests.push({
@@ -234,9 +233,9 @@ const ContestTimeScreen = () => {
     });
 
     return {
-      liveContests: live.slice(0, 10), // Max 10 live contests
-      upcomingContests: upcoming.slice(0, 10), // Next 10 upcoming contests
-      pastContests: past.slice(-10).reverse() // Last 10 past contests (most recent first)
+      liveContests: live.slice(0, 10),
+      upcomingContests: upcoming.slice(0, 10),
+      pastContests: past.slice(-10).reverse()
     };
   }, [contests]);
 
@@ -244,7 +243,7 @@ const ContestTimeScreen = () => {
     fetchContests();
   }, [fetchContests]);
 
-  // Helper functions
+  // Helper functions remain the same
   const formatDate = useCallback((date: Date) => {
     return date.toLocaleString('en-US', { 
       month: 'short', 
@@ -382,7 +381,12 @@ const ContestTimeScreen = () => {
 
   const renderSectionHeader = (title: string, count: number, icon: string, color: string) => {
     return (
-      <View style={[styles.sectionHeader, { backgroundColor: color }]}>
+      <LinearGradient
+        colors={[color, COLORS.sectionBg]}
+        start={[0, 0]}
+        end={[1, 0]}
+        style={styles.sectionHeader}
+      >
         <View style={styles.sectionHeaderContent}>
           <MaterialIcons name={icon as any} size={20} color={COLORS.white} />
           <Text style={styles.sectionHeaderText}>{title}</Text>
@@ -390,7 +394,7 @@ const ContestTimeScreen = () => {
             <Text style={styles.sectionCountText}>{count}</Text>
           </View>
         </View>
-      </View>
+      </LinearGradient>
     );
   };
 
@@ -405,7 +409,10 @@ const ContestTimeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <LinearGradient
+        colors={[COLORS.accent, COLORS.darkBg]}
+        style={styles.header}
+      >
         <View style={styles.headerRow}>
           <TouchableOpacity 
             onPress={() => router.back()} 
@@ -413,10 +420,10 @@ const ContestTimeScreen = () => {
           >
             <MaterialIcons name="arrow-back" size={28} color={COLORS.white} />
           </TouchableOpacity>
-          <MaterialIcons name="schedule" size={28} color={COLORS.primary} style={styles.logoIcon} />
+          <MaterialIcons name="schedule" size={28} color={COLORS.highlight} style={styles.logoIcon} />
           <Text style={styles.title}>Contest Schedule</Text>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.scrollView}
@@ -555,6 +562,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     borderRadius: 8,
     overflow: 'hidden',
+    backgroundColor: COLORS.lightBg,
   },
   sectionHeader: {
     paddingVertical: 12,
@@ -587,8 +595,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    backgroundColor: COLORS.lightBg,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 8,
+    margin: 16,
   },
   emptySectionText: {
     color: COLORS.gray,
@@ -596,10 +605,11 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   contestCard: {
-    marginBottom: 16,
+    margin: 16,
+    marginTop: 8,
     padding: 16,
     borderRadius: 8,
-    backgroundColor: COLORS.lightBg,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderLeftWidth: 4,
     borderLeftColor: COLORS.gray,
   },
@@ -607,7 +617,7 @@ const styles = StyleSheet.create({
     borderLeftColor: COLORS.primary,
   },
   liveCard: {
-    borderLeftColor: COLORS.accent,
+    borderLeftColor: COLORS.live,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -679,10 +689,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   upcomingBadge: {
-    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+    backgroundColor: 'rgba(75, 112, 245, 0.2)',
   },
   liveBadge: {
-    backgroundColor: 'rgba(231, 76, 60, 0.2)',
+    backgroundColor: 'rgba(255, 107, 107, 0.2)',
   },
   statusText: {
     fontSize: 10,
