@@ -3,11 +3,14 @@ import { Slot } from 'expo-router';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { tokenCache } from '../utils/cache';
 
-const InitialLayout = () => {
+
+
+
+const InitialLayout = () => {          
   const { isLoaded } = useAuth();
   if (!isLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1,   justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
       </View>
     );
