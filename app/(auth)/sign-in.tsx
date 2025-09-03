@@ -37,6 +37,7 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [passwordError, setPasswordError] = useState(''); // State for password error message
 
   const validateInputs = () => {
     if (!identifier.trim()) {
@@ -61,6 +62,8 @@ export default function SignInScreen() {
     if (!isLoaded || !validateInputs()) return;
 
     setLoading(true);
+    setPasswordError(''); // Reset error message on new attempt
+
     try {
       const completeSignIn = await signIn.create({
         identifier: identifier.trim(),
@@ -78,11 +81,28 @@ export default function SignInScreen() {
         router.replace('/(home)/home');
       }
     } catch (err: any) {
-      const message = err?.errors?.[0]?.message || err?.message || 'Login failed. Try again.';
-      Alert.alert('Login Failed', message);
+      const message = err?.errors?.[0]?.message || '';
+      // Check if the error from Clerk is related to password/credentials
+      if (message.toLowerCase().includes('password') || message.toLowerCase().includes('credential') || message.toLowerCase().includes('identifier')) {
+        setPasswordError('Wrong Password');
+      } else {
+        // Show a generic alert for other types of errors
+        Alert.alert('Login Failed', message || 'Login failed. Try again.');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handlers to clear the error when user starts typing again
+  const handleIdentifierChange = (text: string) => {
+    setIdentifier(text);
+    if (passwordError) setPasswordError('');
+  };
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    if (passwordError) setPasswordError('');
   };
 
   return (
@@ -92,8 +112,8 @@ export default function SignInScreen() {
         style={styles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContainer} 
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
           removeClippedSubviews={false}
         >
@@ -116,7 +136,7 @@ export default function SignInScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   value={identifier}
-                  onChangeText={setIdentifier}
+                  onChangeText={handleIdentifierChange}
                   selectionColor={COLORS.primary}
                   editable={!loading}
                 />
@@ -131,7 +151,7 @@ export default function SignInScreen() {
                     placeholderTextColor="#94a3b8"
                     secureTextEntry={!isPasswordVisible}
                     value={password}
-                    onChangeText={setPassword}
+                    onChangeText={handlePasswordChange}
                     selectionColor={COLORS.primary}
                     editable={!loading}
                   />
@@ -148,6 +168,9 @@ export default function SignInScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
+              
+              {/* Display wrong password message here */}
+              {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
               <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')} disabled={loading}>
                 <Text style={[styles.link, loading && styles.disabledLink]}>Forgot Password?</Text>
@@ -268,6 +291,14 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   eyeButton: { padding: 14 },
+  errorText: {
+    color: '#fca5a5', // A lighter red for dark background
+    fontSize: 14,
+    textAlign: 'center',
+    width: '100%',
+    marginTop: -8,
+    marginBottom: 10,
+  },
   link: {
     color: COLORS.accent1,
     fontWeight: '600',
@@ -310,3 +341,4 @@ const styles = StyleSheet.create({
   footerText: { color: COLORS.translucentWhite, fontSize: 14 },
   footerLink: { color: COLORS.accent1, fontWeight: '600', fontSize: 14 },
 });
+
