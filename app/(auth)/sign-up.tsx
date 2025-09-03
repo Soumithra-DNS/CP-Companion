@@ -1,21 +1,24 @@
+import { useSignUp } from '@clerk/clerk-expo';
+import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputProps,
+  TouchableOpacity,
+  View,
+  Dimensions,
 } from 'react-native';
-import { useSignUp } from '@clerk/clerk-expo';
-import { Link, useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialIcons } from '@expo/vector-icons';
 
+// --- Constants and Styles ---
 const COLORS = {
   primary: '#3A59D1',
   secondary: '#3D90D7',
@@ -26,6 +29,107 @@ const COLORS = {
   inputBg: 'rgba(255, 255, 255, 0.12)',
   inputBorder: 'rgba(255, 255, 255, 0.3)',
 };
+
+// --- Prop Types for Helper Components ---
+type AuthHeaderProps = { title: string; subtitle: string };
+type AuthButtonProps = { title: string; onPress: () => void; loading?: boolean };
+type PasswordFieldProps = {
+  label: string;
+  value: string;
+  onChange: (text: string) => void;
+  visible: boolean;
+  toggleVisible: () => void;
+};
+interface InputFieldProps extends TextInputProps {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+}
+type VerificationScreenProps = {
+  code: string;
+  setCode: (code: string) => void;
+  handleVerification: () => void;
+  loading?: boolean;
+};
+
+// --- Helper components with corrected types ---
+
+const AuthHeader = ({ title, subtitle }: AuthHeaderProps) => (
+  <View style={styles.header}>
+    <MaterialIcons name="code" size={54} color={COLORS.primary} style={styles.logoIcon} />
+    <Text style={styles.title}>{title}</Text>
+    <Text style={styles.subtitle}>{subtitle}</Text>
+  </View>
+);
+
+const AuthButton = ({ title, onPress, loading }: AuthButtonProps) => (
+  <TouchableOpacity
+    style={[styles.button, loading && styles.disabledButton]}
+    onPress={onPress}
+    disabled={loading}
+  >
+    {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.buttonText}>{title}</Text>}
+  </TouchableOpacity>
+);
+
+const PasswordField = ({ label, value, onChange, visible, toggleVisible }: PasswordFieldProps) => (
+  <View style={styles.inputGroup}>
+    <Text style={styles.label}>{label}</Text>
+    <View style={styles.passwordWrapper}>
+      <TextInput
+        style={styles.passwordInput}
+        placeholder={`Enter ${label.toLowerCase()}`}
+        placeholderTextColor="#cbd5e1"
+        secureTextEntry={!visible}
+        value={value}
+        onChangeText={onChange}
+        selectionColor={COLORS.primary}
+      />
+      <TouchableOpacity style={styles.eyeButton} onPress={toggleVisible}>
+        <MaterialIcons name={visible ? 'visibility-off' : 'visibility'} size={22} color="#94a3b8" />
+      </TouchableOpacity>
+    </View>
+  </View>
+);
+
+const InputField = ({ label, value, onChangeText, ...props }: InputFieldProps) => (
+  <View style={styles.inputGroup}>
+    <Text style={styles.label}>{label}</Text>
+    <TextInput
+      style={styles.input}
+      placeholder={`Enter ${label.toLowerCase()}`}
+      placeholderTextColor="#cbd5e1"
+      value={value}
+      onChangeText={onChangeText}
+      selectionColor={COLORS.primary}
+      {...props}
+    />
+  </View>
+);
+
+const VerificationScreen = ({ code, setCode, handleVerification, loading }: VerificationScreenProps) => (
+  <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.gradient}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+        removeClippedSubviews={false}
+      >
+        <View style={styles.content}>
+          <View style={styles.mainContentContainer}>
+            <AuthHeader title="Verify Email" subtitle="Enter the code sent to your email" />
+            <View style={styles.card}>
+              <InputField label="Verification Code" value={code} onChangeText={setCode} />
+              <AuthButton title="Verify" onPress={handleVerification} loading={loading} />
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  </LinearGradient>
+);
+
+// --- Main SignUp Screen Component ---
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -82,7 +186,8 @@ export default function SignUpScreen() {
       const completeSignUp = await signUp.attemptEmailAddressVerification({ code });
       await setActive({ session: completeSignUp.createdSessionId });
       router.replace('/(home)/home');
-    } catch (err: any) {
+    } catch (err: any)
+{
       const message = err?.errors?.[0]?.message || err?.message || 'Verification failed.';
       Alert.alert('Error', message);
     } finally {
@@ -90,140 +195,64 @@ export default function SignUpScreen() {
     }
   };
 
-  const AuthHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
-    <View style={styles.header}>
-      <MaterialIcons name="code" size={54} color={COLORS.primary} style={styles.logoIcon} />
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.subtitle}>{subtitle}</Text>
-    </View>
-  );
-
-  const AuthButton = ({ title, onPress }: { title: string; onPress: () => void }) => (
-    <TouchableOpacity
-      style={[styles.button, loading && styles.disabledButton]}
-      onPress={onPress}
-      disabled={loading}
-    >
-      {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.buttonText}>{title}</Text>}
-    </TouchableOpacity>
-  );
-
-  const PasswordField = ({
-    label,
-    value,
-    onChange,
-    visible,
-    toggleVisible,
-  }: {
-    label: string;
-    value: string;
-    onChange: (val: string) => void;
-    visible: boolean;
-    toggleVisible: () => void;
-  }) => (
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.passwordWrapper}>
-        <TextInput
-          style={styles.passwordInput}
-          placeholder={label}
-          placeholderTextColor="#cbd5e1"
-          secureTextEntry={!visible}
-          value={value}
-          onChangeText={onChange}
-          selectionColor={COLORS.primary}
-        />
-        <TouchableOpacity style={styles.eyeButton} onPress={toggleVisible}>
-          <MaterialIcons name={visible ? 'visibility-off' : 'visibility'} size={22} color="#94a3b8" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const InputField = ({
-    label,
-    value,
-    onChange,
-    ...props
-  }: {
-    label: string;
-    value: string;
-    onChange: (val: string) => void;
-    [x: string]: any;
-  }) => (
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput
-        style={styles.input}
-        placeholder={label}
-        placeholderTextColor="#cbd5e1"
-        value={value}
-        onChangeText={onChange}
-        selectionColor={COLORS.primary}
-        {...props}
+  if (pendingVerification) {
+    return (
+      <VerificationScreen
+        code={code}
+        setCode={setCode}
+        handleVerification={handleVerification}
+        loading={loading}
       />
-    </View>
-  );
-
-  const VerificationScreen = () => (
-    <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.gradient}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-          <View style={styles.content}>
-            <AuthHeader title="Verify Email" subtitle="Enter the code sent to your email" />
-            <View style={styles.card}>
-              <InputField label="Verification Code" value={code} onChange={setCode} />
-              <AuthButton title="Verify" onPress={handleVerification} />
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </LinearGradient>
-  );
-
-  if (pendingVerification) return <VerificationScreen />;
+    );
+  }
 
   return (
     <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.gradient}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          removeClippedSubviews={false}
+        >
           <View style={styles.content}>
-            <AuthHeader
-              title="Create Account"
-              subtitle="Start your competitive programming journey"
-            />
-            <View style={styles.card}>
-              <InputField
-                label="Email Address"
-                value={email}
-                onChange={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
+            <View style={styles.mainContentContainer}>
+              <AuthHeader
+                title="Create Account"
+                subtitle="Start your competitive programming journey"
               />
-              <PasswordField
-                label="Password"
-                value={password}
-                onChange={setPassword}
-                visible={isPasswordVisible}
-                toggleVisible={() => setIsPasswordVisible(!isPasswordVisible)}
-              />
-              <PasswordField
-                label="Confirm Password"
-                value={confirmPassword}
-                onChange={setConfirmPassword}
-                visible={isConfirmPasswordVisible}
-                toggleVisible={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
-              />
+              <View style={styles.card}>
+                <InputField
+                  label="Email Address"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+                <PasswordField
+                  label="Password"
+                  value={password}
+                  onChange={setPassword}
+                  visible={isPasswordVisible}
+                  toggleVisible={() => setIsPasswordVisible(!isPasswordVisible)}
+                />
+                <PasswordField
+                  label="Confirm Password"
+                  value={confirmPassword}
+                  onChange={setConfirmPassword}
+                  visible={isConfirmPasswordVisible}
+                  toggleVisible={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
+                />
 
-              <AuthButton title="Sign Up" onPress={handleSignUp} />
+                <AuthButton title="Sign Up" onPress={handleSignUp} loading={loading} />
 
-              <View style={styles.footer}>
-                <Text style={styles.footerText}>Already have an account? </Text>
-                <Link href="/(auth)/sign-in" asChild>
-                  <TouchableOpacity disabled={loading}>
-                    <Text style={[styles.footerLink, loading && styles.disabledLink]}>Login</Text>
-                  </TouchableOpacity>
-                </Link>
+                <View style={styles.footer}>
+                  <Text style={styles.footerText}>Already have an account? </Text>
+                  <Link href="/(auth)/sign-in" asChild>
+                    <TouchableOpacity disabled={loading}>
+                      <Text style={[styles.footerLink, loading && styles.disabledLink]}>Login</Text>
+                    </TouchableOpacity>
+                  </Link>
+                </View>
               </View>
             </View>
           </View>
@@ -236,14 +265,25 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   container: { flex: 1 },
-  scrollContainer: { flexGrow: 1, justifyContent: 'center', padding: 20 },
-  content: { alignItems: 'center', width: '100%' },
+  scrollContainer: { flexGrow: 1, paddingHorizontal: 20, paddingVertical: 20 },
+  content: { flex: 1, justifyContent: 'center' },
+  mainContentContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
   header: { alignItems: 'center', marginBottom: 28 },
   logoIcon: {
     marginBottom: 10,
-    textShadowColor: COLORS.primary,
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    ...Platform.select({
+      web: {
+        textShadow: `0px 2px 8px ${COLORS.primary}`,
+      },
+      default: {
+        textShadowColor: COLORS.primary,
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 8,
+      },
+    }),
   },
   title: {
     fontSize: 32,
@@ -265,12 +305,20 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 28,
     marginTop: 10,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    elevation: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.12,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 8,
+      },
+      web: {
+        boxShadow: '0px 8px 18px rgba(0,0,0,0.12)',
+      },
+    }),
   },
   inputGroup: { width: '100%', marginBottom: 18 },
   label: { fontSize: 14, fontWeight: '500', color: COLORS.white, marginBottom: 6 },
@@ -307,6 +355,20 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginTop: 10,
+    ...Platform.select({
+      ios: {
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.18,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: `0px 2px 6px rgba(58, 89, 209, 0.18)`,
+      },
+    }),
   },
   disabledButton: { opacity: 0.7 },
   buttonText: {

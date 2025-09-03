@@ -27,49 +27,85 @@ const COLORS = {
   inputBg: 'rgba(255, 255, 255, 0.06)',
   inputBorder: 'rgba(255, 255, 255, 0.2)',
   placeholder: '#94a3b8',
+  error: '#f87171',
 };
 
 export default function ForgotPasswordScreen() {
-  const { signIn } = useSignIn();
+  const { signIn, setActive } = useSignIn();
+  const router = useRouter();
+
   const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  // Added state for confirm password visibility
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleForgotPassword = async () => {
+  // Step 1: Request password reset code
+  const handleSendResetCode = async () => {
     const trimmedEmail = email.trim();
-
-    if (!trimmedEmail) {
-      Alert.alert('Error', 'Please enter your email');
-      return;
-    }
-
-    if (!isValidEmail(trimmedEmail)) {
+    if (!trimmedEmail || !isValidEmail(trimmedEmail)) {
       Alert.alert('Invalid Email', 'Please enter a valid email address.');
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
       await signIn?.create({
         strategy: 'reset_password_email_code',
         identifier: trimmedEmail,
       });
-
       setEmailSent(true);
-      Alert.alert(
-        'Email Sent',
-        'Check your inbox for the reset code.',
-        [{ text: 'OK', onPress: () => router.replace('/(auth)/sign-in') }]
-      );
+      Alert.alert('Check your Email', 'A password reset code has been sent to your inbox.');
     } catch (error: any) {
-      const message =
-        error?.errors?.[0]?.message ||
-        error?.message ||
-        'Something went wrong. Please try again.';
+      const message = error?.errors?.[0]?.message || 'Something went wrong. Please try again.';
+      Alert.alert('Error', message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2: Verify code and set new password
+  const handleResetPassword = async () => {
+    if (!code.trim()) {
+      Alert.alert('Error', 'Please enter the reset code.');
+      return;
+    }
+    if (password.length < 8) {
+      Alert.alert('Weak Password', 'Password must be at least 8 characters long.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Password Mismatch', 'The passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await signIn?.attemptFirstFactor({
+        strategy: 'reset_password_email_code',
+        code,
+        password,
+      });
+
+      if (result?.status === 'complete') {
+        await setActive?.({ session: result.createdSessionId });
+        Alert.alert('Success', 'Your password has been reset successfully.', [
+          { text: 'OK', onPress: () => router.replace('/(home)/home') }, // Navigate to home or dashboard after success
+        ]);
+      } else {
+        // This case might not be reached if an error is thrown, but it's good practice
+        Alert.alert('Error', 'Could not reset password. Please try again.');
+      }
+    } catch (error: any) {
+      const message = error?.errors?.[0]?.message || 'Invalid code or something went wrong.';
       Alert.alert('Error', message);
     } finally {
       setLoading(false);
@@ -83,29 +119,92 @@ export default function ForgotPasswordScreen() {
         style={styles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-        >
+        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
             <View style={styles.header}>
-              <MaterialIcons
-                name="lock-reset"
-                size={54}
-                color={COLORS.primary}
-                style={styles.logoIcon}
-              />
+              <MaterialIcons name="lock-reset" size={54} color={COLORS.primary} style={styles.logoIcon} />
               <Text style={styles.title}>
                 <Text style={{ color: COLORS.primary }}>Reset</Text> Password
               </Text>
               <Text style={styles.subtitle}>
                 {emailSent
-                  ? "We've sent reset instructions to your email"
-                  : 'Enter your email to receive a password reset code'}
+                  ? `Enter the code sent to ${email} and set a new password.`
+                  : 'Enter your email to receive a password reset code.'}
               </Text>
             </View>
 
-            {!emailSent && (
+            {/* Conditional Rendering: Show email form OR reset form */}
+            {emailSent ? (
+              // STEP 2: FORM TO ENTER CODE AND NEW PASSWORD
+              <View style={styles.card}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Reset Code</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter the 6-digit code"
+                    placeholderTextColor={COLORS.placeholder}
+                    keyboardType="number-pad"
+                    value={code}
+                    onChangeText={setCode}
+                    selectionColor={COLORS.primary}
+                    editable={!loading}
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>New Password</Text>
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      style={styles.passwordInput}
+                      placeholder="Enter new password"
+                      placeholderTextColor={COLORS.placeholder}
+                      secureTextEntry={!showPassword}
+                      value={password}
+                      onChangeText={setPassword}
+                      selectionColor={COLORS.primary}
+                      editable={!loading}
+                    />
+                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                      <MaterialIcons name={showPassword ? 'visibility' : 'visibility-off'} size={24} color={COLORS.placeholder} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* --- MODIFIED SECTION START --- */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Confirm New Password</Text>
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      style={styles.passwordInput}
+                      placeholder="Confirm your new password"
+                      placeholderTextColor={COLORS.placeholder}
+                      secureTextEntry={!showConfirmPassword}
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      selectionColor={COLORS.primary}
+                      editable={!loading}
+                    />
+                    <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                        <MaterialIcons name={showConfirmPassword ? 'visibility' : 'visibility-off'} size={24} color={COLORS.placeholder} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                {/* --- MODIFIED SECTION END --- */}
+
+                <TouchableOpacity
+                  style={[styles.button, loading && styles.disabledButton]}
+                  onPress={handleResetPassword}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color={COLORS.white} />
+                  ) : (
+                    <Text style={styles.buttonText}>Reset Password</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ) : (
+              // STEP 1: FORM TO ENTER EMAIL
               <View style={styles.card}>
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Email Address</Text>
@@ -122,10 +221,9 @@ export default function ForgotPasswordScreen() {
                     editable={!loading}
                   />
                 </View>
-
                 <TouchableOpacity
                   style={[styles.button, loading && styles.disabledButton]}
-                  onPress={handleForgotPassword}
+                  onPress={handleSendResetCode}
                   disabled={loading}
                 >
                   {loading ? (
@@ -226,18 +324,28 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     width: '100%',
   },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.inputBg,
+    borderColor: COLORS.inputBorder,
+    borderWidth: 1.2,
+    borderRadius: 10,
+    paddingRight: 14,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 14,
+    fontSize: 16,
+    color: COLORS.white,
+  },
   button: {
     backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 8,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 2,
+    // Removed marginBottom from here to apply it conditionally
   },
   disabledButton: {
     opacity: 0.7,
