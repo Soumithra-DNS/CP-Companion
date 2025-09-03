@@ -71,7 +71,7 @@ const problems: ProblemItem[] = [
   },
   {
     title: 'FAANG Preparation Resources',
-    url: 'https://github.com/ombharatiya/FAANG-Coding-Interview-Questions',
+    url: 'https://github.com/ombharatiya/FAANG-Coding-Interview-Questions/blob/main/FAANG-Recent-Questions.md',
     colors: [COLORS.accent1, COLORS.secondary],
   },
   {
