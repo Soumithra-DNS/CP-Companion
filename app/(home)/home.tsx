@@ -46,7 +46,7 @@ type MenuItem = {
 const mainFeatures: Feature[] = [
   { label: 'Resources', route: '/resources', icon: 'menu-book', colors: ['#3A59D1', '#3D90D7'] },
   { label: 'Problem List', route: '/problemList', icon: 'list-alt', colors: ['#3D90D7', '#7AC6D2'] },
-  { label: 'Contest Time', route: '/contestTime', icon: 'access-time', colors: ['#7AC6D2', '#B5FCCD'] },
+  { label: 'Contest Schedule', route: '/contestTime', icon: 'access-time', colors: ['#7AC6D2', '#B5FCCD'] },
   { label: 'Progress', route: '/progress', icon: 'trending-up', colors: ['#3A59D1', '#B5FCCD'] },
 ];
 
@@ -209,7 +209,7 @@ export default function HomeScreen() {
               </Link>
 
               <View style={styles.footer}>
-                <Text style={styles.footerText}>Don't have an account? </Text>
+                <Text style={styles.footerText}>Don&apos;t have an account?</Text>
                 <Link href="/(auth)/sign-up" asChild>
                   <TouchableOpacity>
                     <Text style={styles.footerLink}>Sign Up</Text>
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   scrollContainer: { 
     flexGrow: 1, 
     paddingHorizontal: 15,
-    paddingTop: 20,
+    paddingTop: 30,
     paddingBottom: 20,
   },
   content: { 

@@ -121,8 +121,6 @@ export default function AlgorithmDetail() {
       
       {/* Custom Header - No Back Button */}
       <View style={styles.header}>
-        <MaterialIcons name="menu-book" size={32} color={COLORS.accent2} style={styles.logoIcon} />
-        <Text style={styles.headerTitle}>Algorithm Details</Text>
       </View>
 
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
@@ -257,7 +255,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 10 : 50,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight) : 20,
   },
   logoIcon: {
     marginRight: 12,
