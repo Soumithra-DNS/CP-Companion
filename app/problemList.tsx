@@ -40,8 +40,8 @@ type ProblemItem = {
 
 const problems: ProblemItem[] = [
   {
-    title: 'Neet Code 150 Blind List',
-    url: 'https://neetcode.io/practice?tab=neetcode150',
+    title: 'NeetCode 150 Blind List',
+    url: 'https://neetcode.io/practice',
     colors: [COLORS.primary, COLORS.secondary],
   },
   {
@@ -50,13 +50,53 @@ const problems: ProblemItem[] = [
     colors: [COLORS.secondary, COLORS.accent1],
   },
   {
-    title: "Love's 450 Challenge",
-    url: 'https://github.com/MithunSanthosh1234/Love-Babbar-Coding-Challenge---450-Python',
+    title: "Love Babbar's 450 DSA Questions",
+    url: 'https://www.geeksforgeeks.org/dsa-sheet-by-love-babbar/',
     colors: [COLORS.accent1, COLORS.accent2],
   },
   {
-    title: 'LeetCode Interview Problems',
+    title: 'Tech Interview Handbook',
+    url: 'https://www.techinterviewhandbook.org/grind75',
+    colors: [COLORS.primary, COLORS.accent2],
+  },
+  {
+    title: 'Sean Prashad LeetCode Patterns',
+    url: 'https://seanprashad.com/leetcode-patterns/',
+    colors: [COLORS.secondary, COLORS.accent2],
+  },
+  {
+    title: 'Blind 75 Must Do LeetCode',
+    url: 'https://leetcode.com/discuss/general-discussion/460599/blind-75-leetcode-questions',
+    colors: [COLORS.primary, COLORS.accent1],
+  },
+  {
+    title: 'FAANG Preparation Resources',
+    url: 'https://github.com/ombharatiya/FAANG-Coding-Interview-Questions',
+    colors: [COLORS.accent1, COLORS.secondary],
+  },
+  {
+    title: 'Grokking the Coding Interview',
+    url: 'https://www.educative.io/courses/grokking-the-coding-interview',
+    colors: [COLORS.secondary, COLORS.accent2],
+  },
+  {
+    title: 'CSES Problem Set',
+    url: 'https://cses.fi/problemset/',
+    colors: [COLORS.primary, COLORS.accent1],
+  },
+  {
+    title: 'LeetCode Top Interview Questions',
     url: 'https://leetcode.com/explore/interview/card/top-interview-questions-easy/',
+    colors: [COLORS.accent1, COLORS.accent2],
+  },
+  {
+    title: 'AlgoMonster Coding Interview Prep',
+    url: 'https://algo.monster/',
+    colors: [COLORS.secondary, COLORS.primary],
+  },
+  {
+    title: 'InterviewBit Programming Topics',
+    url: 'https://www.interviewbit.com/courses/programming/',
     colors: [COLORS.primary, COLORS.accent2],
   },
 ];
