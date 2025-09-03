@@ -92,7 +92,11 @@ export default function SignInScreen() {
         style={styles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer} 
+          keyboardShouldPersistTaps="handled"
+          removeClippedSubviews={false}
+        >
           <View style={styles.content}>
             <View style={styles.header}>
               <MaterialIcons name="code" size={54} color={COLORS.primary} style={styles.logoIcon} />
@@ -189,9 +193,16 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', marginBottom: 32 },
   logoIcon: {
     marginBottom: 10,
-    textShadowColor: COLORS.primary,
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    ...Platform.select({
+      web: {
+        textShadow: `0px 2px 8px ${COLORS.primary}`,
+      },
+      default: {
+        textShadowColor: COLORS.primary,
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 8,
+      },
+    }),
   },
   title: {
     fontSize: 32,
@@ -214,11 +225,20 @@ const styles = StyleSheet.create({
     padding: 28,
     marginTop: 10,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    elevation: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.12,
+        shadowRadius: 18,
+      },
+      android: {
+        elevation: 8,
+      },
+      web: {
+        boxShadow: '0px 8px 18px rgba(0,0,0,0.12)',
+      },
+    }),
   },
   inputGroup: { width: '100%', marginBottom: 18 },
   label: { fontSize: 14, fontWeight: '500', color: COLORS.white, marginBottom: 6 },
@@ -264,11 +284,20 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginBottom: 24,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.18,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: `0px 2px 6px rgba(58, 89, 209, 0.18)`,
+      },
+    }),
   },
   disabledButton: { opacity: 0.7 },
   buttonText: {
