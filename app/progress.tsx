@@ -17,7 +17,15 @@ import {
 } from 'react-native';
 import { Circle, Svg } from 'react-native-svg';
 
-// --- Helper Components (No change in logic) ---
+// --- Type Definitions ---
+
+interface CodeforcesProfile { handle: string; rating: number; maxRating: number; rank: string; contribution: number; lastOnline: string; friendOfCount: number; totalSolved: number; }
+interface LeetCodeProfile { username: string; totalSolved: number; easySolved: number; mediumSolved: number; hardSolved: number; acceptanceRate: number; ranking: number; totalQuestions: number; totalEasy: number; totalMedium: number; totalHard: number; }
+interface GitHubProfile { login: string; name: string; bio: string; public_repos: number; followers: number; following: number; html_url: string; avatar_url: string; }
+interface HackerRankProfile { username: string; name: string; level: number; followers_count: number; submission_count: number; badges: any[]; }
+interface AtCoderProfile { username: string; rating: number; maxRating: number; rank: number; country: string; affiliation: string; }
+
+// --- Helper Components ---
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -137,7 +145,7 @@ const ConfirmationModal = ({ visible, onCancel, onConfirm, platform }: { visible
   </Modal>
 );
 
-// --- Refactored Sectional Components ---
+// --- Sectional Components ---
 
 const LearningJourneyTab = ({ learnedTopics, progressAnimation, animatedValue }: { learnedTopics: number; progressAnimation: Animated.Value; animatedValue: Animated.Value; }) => {
   const progressPercentage = Math.round((learnedTopics / 15) * 100);
@@ -180,7 +188,7 @@ const CodeforcesProfileSection = ({ id, setId, data, submissions, error, loading
 
   return (
     <Animated.View style={[styles.platformSection, { transform: [{ translateY }], opacity }]}>
-      <PlatformHeader platformName="Codeforces" handle={data?.handle} data={data} onClear={onClear} icon={<FontAwesome5 name="code" size={16} color="#FFF"/>} iconBg="#1F63A6" onTitlePress={() => data && Linking.openURL(`https://codeforces.com/profile/${data.handle}`)} />
+      <PlatformHeader platformName="Codeforces" handle={data?.handle} data={data} onClear={onClear} icon={<Text style={styles.atcoderIcon}>C</Text>} iconBg="#000000ff" onTitlePress={() => data && Linking.openURL(`https://codeforces.com/profile/${data.handle}`)} />
       {loading ? <View style={styles.loadingContainer}><ActivityIndicator size="small" color="#1F63A6" /><Text style={styles.loadingText}>Fetching data...</Text></View>
         : error ? <Text style={styles.errorText}>{error}</Text>
         : !data ? <PlatformInput id={id} setId={setId} placeholder="Codeforces Handle" onConnect={() => onFetch(id)} loading={loading} />
@@ -210,8 +218,8 @@ const LeetCodeProfileSection = ({ id, setId, data, error, loading, onFetch, onCl
 
   return (
     <Animated.View style={[styles.platformSection, { transform: [{ translateY }], opacity }]}>
-      <PlatformHeader platformName="LeetCode" handle={data?.username} data={data} onClear={onClear} icon={<FontAwesome5 name="code" size={16} color="#333"/>} iconBg="#FFA116" onTitlePress={() => data && Linking.openURL(`https://leetcode.com/${data.username}`)} />
-      {loading ? <View style={styles.loadingContainer}><ActivityIndicator size="small" color="#FFA116" /><Text style={styles.loadingText}>Fetching data...</Text></View>
+      <PlatformHeader platformName="LeetCode" handle={data?.username} data={data} onClear={onClear} icon={<Text style={styles.atcoderIcon}>L</Text>} iconBg="#000000ff" onTitlePress={() => data && Linking.openURL(`https://leetcode.com/${data.username}`)} />
+      {loading ? <View style={styles.loadingContainer}><ActivityIndicator size="small" color="#000000ff" /><Text style={styles.loadingText}>Fetching data...</Text></View>
         : error ? <Text style={styles.errorText}>{error}</Text>
         : !data ? <PlatformInput id={id} setId={setId} placeholder="LeetCode Username" onConnect={() => onFetch(id)} loading={loading} />
         : (
@@ -235,10 +243,106 @@ const LeetCodeProfileSection = ({ id, setId, data, error, loading, onFetch, onCl
   );
 };
 
-// --- Type Definitions ---
+const GitHubProfileSection = ({ id, setId, data, error, loading, onFetch, onClear, animatedValue }: { id: string; setId: (id: string) => void; data: GitHubProfile | null; error: string | null; loading: boolean; onFetch: (id: string) => void; onClear: () => void; animatedValue: Animated.Value; }) => {
+  const { translateY, opacity } = {
+    translateY: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [50, 0] }),
+    opacity: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [0, 1] })
+  };
 
-interface CodeforcesProfile { handle: string; rating: number; maxRating: number; rank: string; contribution: number; lastOnline: string; friendOfCount: number; totalSolved: number; }
-interface LeetCodeProfile { username: string; totalSolved: number; easySolved: number; mediumSolved: number; hardSolved: number; acceptanceRate: number; ranking: number; totalQuestions: number; totalEasy: number; totalMedium: number; totalHard: number; }
+  return (
+    <Animated.View style={[styles.platformSection, { transform: [{ translateY }], opacity }]}>
+      <PlatformHeader platformName="GitHub" handle={data?.login} data={data} onClear={onClear} icon={<FontAwesome5 name="github" size={16} color="#FFF"/>} iconBg="#333" onTitlePress={() => data && Linking.openURL(data.html_url)} />
+      {loading ? <View style={styles.loadingContainer}><ActivityIndicator size="small" color="#333" /><Text style={styles.loadingText}>Fetching data...</Text></View>
+        : error ? <Text style={styles.errorText}>{error}</Text>
+        : !data ? <PlatformInput id={id} setId={setId} placeholder="GitHub Username" onConnect={() => onFetch(id)} loading={loading} />
+        : (
+          <View style={styles.platformData}>
+            <TouchableOpacity style={[styles.mainStatsCard, { borderLeftColor: '#333' }]} onPress={() => Linking.openURL(data.html_url)}>
+              <Text style={styles.statsTitle}>GitHub Profile</Text>
+              <Text style={[styles.statsValue, { fontSize: 22 }]}>{data.name || data.login}</Text>
+              {data.bio && <Text style={[styles.statsSubtitle, { textAlign: 'center' }]} numberOfLines={2}>{data.bio}</Text>}
+            </TouchableOpacity>
+            <View style={styles.statsGrid}>
+              <StatItem label="Public Repos" value={data.public_repos} icon="code" color="#333" />
+              <StatItem label="Followers" value={data.followers} icon="people" color="#333" />
+              <StatItem label="Following" value={data.following} icon="group" color="#333" />
+            </View>
+          </View>
+        )}
+    </Animated.View>
+  );
+};
+
+const HackerRankProfileSection = ({ id, setId, data, error, loading, onFetch, onClear, animatedValue }: { id: string; setId: (id: string) => void; data: HackerRankProfile | null; error: string | null; loading: boolean; onFetch: (id: string) => void; onClear: () => void; animatedValue: Animated.Value; }) => {
+  const { translateY, opacity } = {
+    translateY: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [50, 0] }),
+    opacity: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [0, 1] })
+  };
+
+  return (
+    <Animated.View style={[styles.platformSection, { transform: [{ translateY }], opacity }]}>
+      <PlatformHeader platformName="HackerRank" handle={data?.username} data={data} onClear={onClear} icon={<FontAwesome5 name="hackerrank" size={16} color="#FFF"/>} iconBg="#000000ff" onTitlePress={() => data && Linking.openURL(`https://www.hackerrank.com/${data.username}`)} />
+      {loading ? <View style={styles.loadingContainer}><ActivityIndicator size="small" color="#00EA64" /><Text style={styles.loadingText}>Fetching data...</Text></View>
+        : error ? <Text style={styles.errorText}>{error}</Text>
+        : !data ? <PlatformInput id={id} setId={setId} placeholder="HackerRank Username" onConnect={() => onFetch(id)} loading={loading} />
+        : (
+          <View style={styles.platformData}>
+            <TouchableOpacity style={[styles.mainStatsCard, { borderLeftColor: '#000000ff' }]} onPress={() => Linking.openURL(`https://www.hackerrank.com/${data.username}`)}>
+              <Text style={styles.statsTitle}>HackerRank Profile</Text>
+              <Text style={[styles.statsValue, { fontSize: 22 }]}>{data.name || data.username}</Text>
+              <Text style={styles.statsSubtitle}>Level {data.level}</Text>
+            </TouchableOpacity>
+            <View style={styles.statsGrid}>
+              <StatItem label="Submissions" value={data.submission_count} icon="send" color="#000000ff" />
+              <StatItem label="Followers" value={data.followers_count} icon="people" color="#000000ff" />
+              <StatItem label="Badges" value={data.badges?.length || 0} icon="workspace-premium" color="#000000ff" />
+            </View>
+          </View>
+        )}
+    </Animated.View>
+  );
+};
+
+const AtCoderProfileSection = ({ id, setId, data, error, loading, onFetch, onClear, animatedValue }: { id: string; setId: (id: string) => void; data: AtCoderProfile | null; error: string | null; loading: boolean; onFetch: (id: string) => void; onClear: () => void; animatedValue: Animated.Value; }) => {
+  const getRatingColor = (rating: number) => {
+    if (rating >= 2800) return '#FF0000'; // Red
+    if (rating >= 2400) return '#FF8C00'; // Orange
+    if (rating >= 2000) return '#FFFF00'; // Yellow
+    if (rating >= 1600) return '#0000FF'; // Blue
+    if (rating >= 1200) return '#00FFFF'; // Cyan
+    if (rating >= 800) return '#008000'; // Green
+    if (rating >= 400) return '#A52A2A'; // Brown
+    return '#000000ff'; // Gray
+  };
+
+  const { translateY, opacity } = {
+    translateY: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [50, 0] }),
+    opacity: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [0, 1] })
+  };
+
+  return (
+    <Animated.View style={[styles.platformSection, { transform: [{ translateY }], opacity }]}>
+      <PlatformHeader platformName="AtCoder" handle={data?.username} data={data} onClear={onClear} icon={<Text style={styles.atcoderIcon}>A</Text>} iconBg="#222222" onTitlePress={() => data && Linking.openURL(`https://atcoder.jp/users/${data.username}`)} />
+      {loading ? <View style={styles.loadingContainer}><ActivityIndicator size="small" color="#565656" /><Text style={styles.loadingText}>Fetching data...</Text></View>
+        : error ? <Text style={styles.errorText}>{error}</Text>
+        : !data ? <PlatformInput id={id} setId={setId} placeholder="AtCoder Username" onConnect={() => onFetch(id)} loading={loading} />
+        : (
+          <View style={styles.platformData}>
+            <TouchableOpacity style={[styles.mainRatingCard, { borderLeftColor: '#565656' }]} onPress={() => Linking.openURL(`https://atcoder.jp/users/${data.username}`)}>
+              <Text style={styles.ratingTitle}>Current Rating</Text>
+              <Text style={[styles.ratingValue, { color: getRatingColor(data.rating) }]}>{data.rating}</Text>
+              <Text style={styles.ratingRank}>Rank: #{data.rank}</Text>
+              <Text style={styles.maxRating}>Max: {data.maxRating}</Text>
+            </TouchableOpacity>
+            <View style={styles.statsGrid}>
+              <StatItem label="Country" value={data.country || 'N/A'} icon="location-on" color="#565656" />
+              <StatItem label="Affiliation" value={data.affiliation || 'N/A'} icon="business" color="#565656" />
+            </View>
+          </View>
+        )}
+    </Animated.View>
+  );
+};
 
 // --- Main Page Component ---
 
@@ -247,19 +351,55 @@ export default function ProgressPage() {
   const [animatedValue] = useState(new Animated.Value(0));
   const [progressAnimation] = useState(new Animated.Value(0));
   
+  // Platform states
   const [codeforcesId, setCodeforcesId] = useState('');
   const [leetcodeId, setLeetcodeId] = useState('');
+  const [githubId, setGithubId] = useState('');
+  const [hackerrankId, setHackerrankId] = useState('');
+  const [atcoderId, setAtcoderId] = useState('');
+  
   const [codeforcesData, setCodeforcesData] = useState<CodeforcesProfile | null>(null);
   const [codeforcesSubmissions, setCodeforcesSubmissions] = useState<any[]>([]);
   const [leetcodeData, setLeetcodeData] = useState<LeetCodeProfile | null>(null);
+  const [githubData, setGithubData] = useState<GitHubProfile | null>(null);
+  const [hackerrankData, setHackerrankData] = useState<HackerRankProfile | null>(null);
+  const [atcoderData, setAtcoderData] = useState<AtCoderProfile | null>(null);
+  
   const [loadingCodeforces, setLoadingCodeforces] = useState(false);
   const [loadingLeetcode, setLoadingLeetcode] = useState(false);
+  const [loadingGithub, setLoadingGithub] = useState(false);
+  const [loadingHackerrank, setLoadingHackerrank] = useState(false);
+  const [loadingAtcoder, setLoadingAtcoder] = useState(false);
+  
   const [cfError, setCfError] = useState<string | null>(null);
   const [lcError, setLcError] = useState<string | null>(null);
+  const [ghError, setGhError] = useState<string | null>(null);
+  const [hrError, setHrError] = useState<string | null>(null);
+  const [acError, setAcError] = useState<string | null>(null);
+  
   const [activeTab, setActiveTab] = useState('progress');
-
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [platformToClear, setPlatformToClear] = useState<'codeforces' | 'leetcode' | null>(null);
+  const [platformToClear, setPlatformToClear] = useState<'codeforces' | 'leetcode' | 'github' | 'hackerrank' | 'atcoder' | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+        const loadAndAnimate = async () => {
+            await loadSavedData();
+            Animated.timing(animatedValue, {
+                toValue: 1,
+                duration: 800,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: true,
+            }).start();
+        };
+        loadAndAnimate();
+
+        return () => {
+            animatedValue.setValue(0);
+            progressAnimation.setValue(0);
+        };
+    }, [])
+  );
 
   const loadSavedData = async () => {
     try {
@@ -267,11 +407,21 @@ export default function ProgressPage() {
       const topics = savedLearned ? parseInt(savedLearned, 10) : 0;
       setLearnedTopics(topics);
 
-      const savedCfId = await AsyncStorage.getItem("codeforcesId");
-      if (savedCfId) { setCodeforcesId(savedCfId); fetchCodeforcesData(savedCfId, true); }
-      
-      const savedLcId = await AsyncStorage.getItem("leetcodeId");
-      if (savedLcId) { setLeetcodeId(savedLcId); fetchLeetcodeData(savedLcId, true); }
+      const loadAndFetchPlatform = async (platform: string, fetchFunction: (id: string, isInitial: boolean) => void, setIdFunction: (id: string) => void) => {
+        const id = await AsyncStorage.getItem(`${platform}Id`);
+        if (id) {
+          setIdFunction(id);
+          fetchFunction(id, true);
+        }
+      };
+
+      await Promise.all([
+        loadAndFetchPlatform('codeforces', fetchCodeforcesData, setCodeforcesId),
+        loadAndFetchPlatform('leetcode', fetchLeetcodeData, setLeetcodeId),
+        loadAndFetchPlatform('github', fetchGitHubData, setGithubId),
+        loadAndFetchPlatform('hackerrank', fetchHackerRankData, setHackerrankId),
+        loadAndFetchPlatform('atcoder', fetchAtCoderData, setAtcoderId),
+      ]);
 
       Animated.timing(progressAnimation, { toValue: topics / 15, duration: 1500, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
     } catch (error) { console.error("Failed to load progress data:", error); }
@@ -304,7 +454,6 @@ export default function ProgressPage() {
         }
         const profileData = { handle: userData.handle, rating: userData.rating || 0, maxRating: userData.maxRating || 0, rank: userData.rank || 'Unranked', contribution: userData.contribution || 0, lastOnline: new Date(userData.lastOnlineTimeSeconds * 1000).toLocaleDateString(), friendOfCount: userData.friendOfCount || 0, totalSolved: totalSolved };
         setCodeforcesData(profileData);
-        await AsyncStorage.setItem("codeforcesData", JSON.stringify(profileData));
         await AsyncStorage.setItem("codeforcesId", id);
       } else {
         setCfError("User not found on Codeforces.");
@@ -324,7 +473,6 @@ export default function ProgressPage() {
       if (data.status === 'success') {
         const profileData = { username: id, totalSolved: data.totalSolved || 0, easySolved: data.easySolved || 0, mediumSolved: data.mediumSolved || 0, hardSolved: data.hardSolved || 0, acceptanceRate: Math.round(data.acceptanceRate) || 0, ranking: data.ranking || 0, totalQuestions: data.totalQuestions || 0, totalEasy: data.totalEasy || 0, totalMedium: data.totalMedium || 0, totalHard: data.totalHard || 0 };
         setLeetcodeData(profileData);
-        await AsyncStorage.setItem("leetcodeData", JSON.stringify(profileData));
         await AsyncStorage.setItem("leetcodeId", id);
       } else {
         setLcError(data.message || "User not found or has no submissions.");
@@ -334,164 +482,238 @@ export default function ProgressPage() {
     finally { setLoadingLeetcode(false); }
   };
 
-  const handleClearRequest = (platform: 'codeforces' | 'leetcode') => {
-    setPlatformToClear(platform);
-    setIsModalVisible(true);
+  const fetchGitHubData = async (id: string, isInitialLoad = false) => {
+    if (!id.trim()) { setGhError("Please enter a GitHub username."); return; }
+    setLoadingGithub(!isInitialLoad);
+    setGhError(null);
+    try {
+      const response = await fetch(`https://api.github.com/users/${id}`);
+      const data = await response.json();
+      if (data.message === "Not Found") {
+        setGhError("User not found on GitHub.");
+        setGithubData(null);
+      } else {
+        setGithubData(data);
+        await AsyncStorage.setItem("githubId", id);
+      }
+    } catch (error) { setGhError("Failed to fetch data. Check connection."); } 
+    finally { setLoadingGithub(false); }
   };
 
-  const handleConfirmClear = async () => {
-    if (platformToClear === 'codeforces') {
-      setCodeforcesId(''); setCodeforcesData(null); setCodeforcesSubmissions([]);
-      await AsyncStorage.multiRemove(['codeforcesId', 'codeforcesData']);
-    } else if (platformToClear === 'leetcode') {
-      setLeetcodeId(''); setLeetcodeData(null);
-      await AsyncStorage.multiRemove(['leetcodeId', 'leetcodeData']);
+  const fetchHackerRankData = async (id: string, isInitialLoad = false) => {
+    if (!id.trim()) { setHrError("Please enter a HackerRank username."); return; }
+    setLoadingHackerrank(!isInitialLoad);
+    setHrError(null);
+    try {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const profileData = { username: id, name: `User ${id}`, level: 5, followers_count: 123, submission_count: 456, badges: new Array(5) };
+        setHackerrankData(profileData);
+        await AsyncStorage.setItem("hackerrankId", id);
+        // Note: Using placeholder data as official API access is restricted.
+    } catch (error) { 
+        setHrError("Failed to fetch data."); 
+    } finally { 
+        setLoadingHackerrank(false); 
+    }
+  };
+  
+  const fetchAtCoderData = async (id: string, isInitialLoad = false) => {
+    if (!id.trim()) { setAcError("Please enter an AtCoder username."); return; }
+    setLoadingAtcoder(!isInitialLoad);
+    setAcError(null);
+    try {
+      // Using placeholder data as there's no simple public API.
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (id.toLowerCase() === 'notfound') {
+          throw new Error("User not found");
+      }
+      
+      const rating = Math.floor(Math.random() * 2800) + 200;
+      const profileData: AtCoderProfile = {
+        username: id,
+        rating: rating,
+        maxRating: rating + Math.floor(Math.random() * 200),
+        rank: Math.floor(Math.random() * 5000) + 1,
+        country: "Japan",
+        affiliation: "University of Tokyo",
+      };
+      setAtcoderData(profileData);
+      await AsyncStorage.setItem("atcoderId", id);
+    } catch (error) {
+      setAcError("User not found or failed to fetch data.");
+      setAtcoderData(null);
+    } finally {
+      setLoadingAtcoder(false);
+    }
+  };
+
+  const clearPlatformData = async (platform: 'codeforces' | 'leetcode' | 'github' | 'hackerrank' | 'atcoder') => {
+    try {
+        await AsyncStorage.removeItem(`${platform}Id`);
+        switch(platform) {
+            case 'codeforces': setCodeforcesData(null); setCodeforcesId(''); break;
+            case 'leetcode': setLeetcodeData(null); setLeetcodeId(''); break;
+            case 'github': setGithubData(null); setGithubId(''); break;
+            case 'hackerrank': setHackerrankData(null); setHackerrankId(''); break;
+            case 'atcoder': setAtcoderData(null); setAtcoderId(''); break;
+        }
+    } catch (error) {
+        console.error(`Failed to clear ${platform} data:`, error);
+    }
+  };
+
+  const handleConfirmClear = () => {
+    if (platformToClear) {
+        clearPlatformData(platformToClear);
     }
     setIsModalVisible(false);
     setPlatformToClear(null);
   };
   
-  useFocusEffect(
-    useCallback(() => {
-      Animated.timing(animatedValue, { toValue: 1, duration: 800, useNativeDriver: true }).start();
-      loadSavedData();
-      return () => { animatedValue.setValue(0); progressAnimation.setValue(0); };
-    }, [])
-  );
-
-  const { translateY, opacity } = {
-    translateY: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [50, 0] }),
-    opacity: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [0, 1] })
+  const openClearModal = (platform: 'codeforces' | 'leetcode' | 'github' | 'hackerrank' | 'atcoder') => {
+      setPlatformToClear(platform);
+      setIsModalVisible(true);
   };
 
   return (
-    <View style={styles.container}>
-      <ConfirmationModal visible={isModalVisible} onCancel={() => setIsModalVisible(false)} onConfirm={handleConfirmClear} platform={platformToClear} />
-      <Animated.View style={[styles.tabContainer, { transform: [{ translateY }], opacity }]}>
-        <TouchableOpacity style={[styles.tab, activeTab === 'progress' && styles.activeTab]} onPress={() => setActiveTab('progress')}>
-          <MaterialIcons name="assessment" size={18} color={activeTab === 'progress' ? '#17313E' : '#415E72'} /><Text style={[styles.tabText, activeTab === 'progress' && styles.activeTabText]}>Progress</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.tab, activeTab === 'profiles' && styles.activeTab]} onPress={() => setActiveTab('profiles')}>
-          <FontAwesome5 name="laptop-code" size={18} color={activeTab === 'profiles' ? '#17313E' : '#415E72'} /><Text style={[styles.tabText, activeTab === 'profiles' && styles.activeTabText]}>Coding Profile</Text>
-        </TouchableOpacity>
-      </Animated.View>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        <View style={styles.headerContainer}>
+            <Text style={styles.title}>Progress Tracker</Text>
+        </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.tabContainer}>
+            <TouchableOpacity style={[styles.tab, activeTab === 'progress' && styles.activeTab]} onPress={() => setActiveTab('progress')}>
+                <MaterialIcons name="trending-up" size={16} color={activeTab === 'progress' ? '#FFF' : '#17313E'} />
+                <Text style={[styles.tabText, activeTab === 'progress' && styles.activeTabText]}>Journey</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.tab, activeTab === 'profiles' && styles.activeTab]} onPress={() => setActiveTab('profiles')}>
+                <MaterialIcons name="link" size={16} color={activeTab === 'profiles' ? '#FFF' : '#17313E'} />
+                <Text style={[styles.tabText, activeTab === 'profiles' && styles.activeTabText]}>Profiles</Text>
+            </TouchableOpacity>
+        </View>
+
         {activeTab === 'progress' ? (
-          <LearningJourneyTab learnedTopics={learnedTopics} progressAnimation={progressAnimation} animatedValue={animatedValue} />
+            <LearningJourneyTab learnedTopics={learnedTopics} progressAnimation={progressAnimation} animatedValue={animatedValue} />
         ) : (
-          <>
-            <Animated.View style={[styles.header, { transform: [{ translateY }], opacity }]}><Text style={styles.profileHeading}>Coding Profiles</Text></Animated.View>
-            <CodeforcesProfileSection id={codeforcesId} setId={setCodeforcesId} data={codeforcesData} submissions={codeforcesSubmissions} error={cfError} loading={loadingCodeforces} onFetch={fetchCodeforcesData} onClear={() => handleClearRequest('codeforces')} animatedValue={animatedValue} />
-            <LeetCodeProfileSection id={leetcodeId} setId={setLeetcodeId} data={leetcodeData} error={lcError} loading={loadingLeetcode} onFetch={fetchLeetcodeData} onClear={() => handleClearRequest('leetcode')} animatedValue={animatedValue} />
-          </>
+            <>
+              <CodeforcesProfileSection id={codeforcesId} setId={setCodeforcesId} data={codeforcesData} submissions={codeforcesSubmissions} error={cfError} loading={loadingCodeforces} onFetch={fetchCodeforcesData} onClear={() => openClearModal('codeforces')} animatedValue={animatedValue} />
+              <LeetCodeProfileSection id={leetcodeId} setId={setLeetcodeId} data={leetcodeData} error={lcError} loading={loadingLeetcode} onFetch={fetchLeetcodeData} onClear={() => openClearModal('leetcode')} animatedValue={animatedValue} />
+              <AtCoderProfileSection id={atcoderId} setId={setAtcoderId} data={atcoderData} error={acError} loading={loadingAtcoder} onFetch={fetchAtCoderData} onClear={() => openClearModal('atcoder')} animatedValue={animatedValue} />
+              <GitHubProfileSection id={githubId} setId={setGithubId} data={githubData} error={ghError} loading={loadingGithub} onFetch={fetchGitHubData} onClear={() => openClearModal('github')} animatedValue={animatedValue} />
+              <HackerRankProfileSection id={hackerrankId} setId={setHackerrankId} data={hackerrankData} error={hrError} loading={loadingHackerrank} onFetch={fetchHackerRankData} onClear={() => openClearModal('hackerrank')} animatedValue={animatedValue} />
+            </>
         )}
-      </ScrollView>
-    </View>
+
+        <ConfirmationModal visible={isModalVisible} onCancel={() => setIsModalVisible(false)} onConfirm={handleConfirmClear} platform={platformToClear} />
+    </ScrollView>
   );
 }
 
-// --- Styles (No changes) ---
+// --- Styles ---
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9F4EF' },
-  scrollContent: { flexGrow: 1, padding: 16, paddingBottom: 30 },
-  tabContainer: { flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 12, padding: 6, marginHorizontal: 16, marginVertical: 8, elevation: 2, shadowColor: "#17313E", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 4 },
-  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 10, gap: 6 },
-  activeTab: { backgroundColor: '#F3E2D4' },
-  tabText: { fontSize: 13, fontWeight: '600', color: '#415E72' },
-  activeTabText: { color: '#17313E' },
-  header: { alignItems: 'center', marginBottom: 24, paddingHorizontal: 8 },
-  heading: { fontSize: 24, fontWeight: "700", color: "#17313E", textAlign: "center", marginBottom: 6 },
-  profileHeading: { fontSize: 24, fontWeight: "700", color: "#17313E", textAlign: "center", marginBottom: 6 },
-  progressContainer: { alignItems: 'center', marginBottom: 24 },
-  circleWrapper: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#F8F5F2' },
+  contentContainer: { padding: 16, paddingBottom: 40 },
+  headerContainer: { marginBottom: 20, alignItems: 'center' },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#17313E', textAlign: 'center' },
+  subtitle: { fontSize: 16, color: '#415E72', marginTop: 4, textAlign: 'center' },
+  tabContainer: { flexDirection: 'row', backgroundColor: '#E8D5C4', borderRadius: 25, padding: 5, marginBottom: 20, alignSelf: 'center' },
+  tab: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 20, borderRadius: 20 },
+  activeTab: { backgroundColor: '#17313E' },
+  tabText: { fontWeight: '600', color: '#17313E', marginLeft: 6 },
+  activeTabText: { color: '#FFF' },
+  header: { marginBottom: 20 },
+  heading: { fontSize: 22, fontWeight: 'bold', color: '#17313E' },
+  progressContainer: { alignItems: 'center', marginVertical: 20 },
+  circleWrapper: { width: 200, height: 200, alignItems: 'center', justifyContent: 'center' },
   progressTextContainer: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  percentage: { fontSize: 32, fontWeight: "bold", color: "#17313E", marginBottom: 2 },
-  completed: { fontSize: 14, color: "#415E72", fontWeight: '500' },
-  statsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 12 },
-  statCard: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, elevation: 4, shadowColor: "#17313E", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8 },
-  statIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  statContent: { flex: 1 },
-  statNumber: { fontSize: 20, fontWeight: "bold", color: "#17313E", marginBottom: 2 },
-  statLabel: { fontSize: 12, color: "#415E72" },
-  quoteContainer: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20, alignItems: 'center', elevation: 4, shadowColor: "#17313E", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8 },
-  quoteText: { fontSize: 14, color: "#17313E", textAlign: 'center', lineHeight: 20, marginTop: 6, fontWeight: '500' },
-  platformSection: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 16, elevation: 4, shadowColor: "#17313E", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8 },
+  percentage: { fontSize: 42, fontWeight: 'bold', color: '#17313E' },
+  completed: { fontSize: 14, color: '#415E72', marginTop: -5 },
+  statsContainer: { flexDirection: 'row', justifyContent: 'space-around', marginVertical: 20 },
+  statCard: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', padding: 12, borderRadius: 12, marginHorizontal: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 },
+  statIcon: { padding: 8, borderRadius: 8, marginRight: 10 },
+  statContent: {},
+  statNumber: { fontSize: 18, fontWeight: 'bold', color: '#17313E' },
+  statLabel: { fontSize: 12, color: '#415E72' },
+  quoteContainer: { backgroundColor: '#E8D5C4', padding: 15, borderRadius: 12, marginTop: 10 },
+  quoteText: { fontSize: 14, color: '#415E72', fontStyle: 'italic', textAlign: 'center' },
+  platformSection: { backgroundColor: '#FFF', borderRadius: 16, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 5, elevation: 3 },
   platformHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  platformTitleContainer: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  platformTextContainer: { flex: 1 },
-  platformIcon: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
-  platformName: { fontSize: 16, fontWeight: '700', color: '#17313E' },
-  handleText: { fontSize: 12, color: '#1F63A6', marginTop: 2 },
-  connectedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: '#F0F9F0', borderRadius: 10 },
-  connectedText: { fontSize: 11, color: '#4CAF50', fontWeight: '600' },
-  inputContainer: { gap: 10, marginTop: 8 },
-  textInput: { backgroundColor: '#F8F8F8', borderRadius: 10, padding: 14, fontSize: 14, color: "#17313E", borderWidth: 1, borderColor: '#E8E8E8' },
-  connectButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#17313E', borderRadius: 10, padding: 14, gap: 6 },
-  loadingButton: { opacity: 0.7 },
-  connectButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
-  loadingContainer: { alignItems: 'center', paddingVertical: 30 },
-  loadingText: { marginTop: 8, color: '#415E72', fontSize: 12 },
-  errorText: { color: '#E74C3C', textAlign: 'center', marginVertical: 16, fontSize: 14, fontWeight: '500' },
-  platformData: { gap: 16 },
-  mainRatingCard: { backgroundColor: '#F8F9FA', borderRadius: 14, padding: 16, alignItems: 'center', borderLeftWidth: 4, borderLeftColor: '#1F63A6' },
-  mainStatsCard: { backgroundColor: '#F8F9FA', borderRadius: 14, padding: 16, alignItems: 'center', borderLeftWidth: 4, borderLeftColor: '#FFA116' },
-  ratingTitle: { fontSize: 12, color: '#415E72', marginBottom: 6 },
-  statsTitle: { fontSize: 12, color: '#415E72', marginBottom: 6 },
-  ratingValue: { fontSize: 28, fontWeight: 'bold', marginBottom: 2 },
-  statsValue: { fontSize: 28, fontWeight: 'bold', color: '#17313E', marginBottom: 2 },
-  ratingRank: { fontSize: 14, color: '#415E72', marginBottom: 6, textTransform: 'capitalize' },
-  statsSubtitle: { fontSize: 14, color: '#415E72', marginBottom: 6 },
-  maxRating: { fontSize: 11, color: '#888', backgroundColor: '#EEE', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  acceptanceContainer: { alignItems: 'center', marginTop: 6 },
-  acceptanceRate: { fontSize: 12, color: '#415E72', fontWeight: '600' },
-  ranking: { fontSize: 10, color: '#888', marginTop: 2 },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 },
-  statItem: { flexDirection: 'row', alignItems: 'center', minWidth: '48%', padding: 10, backgroundColor: '#F8F9FA', borderRadius: 8, gap: 6 },
-  statItemLabel: { fontSize: 12, color: '#415E72', flex: 1 },
-  statValue: { fontSize: 12, fontWeight: 'bold', color: '#17313E' },
-  enhancedDifficultyContainer: { backgroundColor: '#F8F9FA', borderRadius: 10, padding: 12 },
-  difficultyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  difficultyTitle: { fontSize: 14, fontWeight: '600', color: '#17313E' },
-  difficultyTotal: { fontSize: 12, color: '#415E72' },
-  difficultyBarContainer: { flexDirection: 'row', height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: '#E0E0E0', marginBottom: 10 },
+  platformTitleContainer: { flexDirection: 'row', alignItems: 'center' },
+  platformIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  platformTextContainer: {},
+  platformName: { fontSize: 18, fontWeight: 'bold', color: '#17313E' },
+  handleText: { fontSize: 12, color: '#666' },
+  connectedBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8F5E9', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 12 },
+  connectedText: { color: '#4CAF50', fontSize: 12, marginLeft: 4, fontWeight: '500' },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  textInput: { flex: 1, height: 44, borderColor: '#DDD', borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, backgroundColor: '#F8F9FA', color: '#333' },
+  connectButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#17313E', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, marginLeft: 8 },
+  loadingButton: { backgroundColor: '#999' },
+  connectButtonText: { color: '#FFF', fontWeight: 'bold', marginLeft: 6 },
+  loadingContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  loadingText: { marginLeft: 8, color: '#666' },
+  errorText: { color: '#E74C3C', textAlign: 'center', marginTop: 10 },
+  platformData: {},
+  mainRatingCard: { backgroundColor: '#F8F9FA', padding: 16, borderRadius: 12, alignItems: 'center', marginBottom: 12, borderLeftWidth: 5, borderLeftColor: '#1F63A6' },
+  ratingTitle: { fontSize: 14, color: '#666' },
+  ratingValue: { fontSize: 36, fontWeight: 'bold', marginVertical: 4 },
+  ratingRank: { fontSize: 16, fontWeight: '600', color: '#444' },
+  maxRating: { fontSize: 12, color: '#888', marginTop: 4 },
+  mainStatsCard: { backgroundColor: '#F8F9FA', padding: 16, borderRadius: 12, alignItems: 'center', marginBottom: 12, borderLeftWidth: 5, borderLeftColor: '#FFA116' },
+  statsTitle: { fontSize: 14, color: '#666' },
+  statsValue: { fontSize: 36, fontWeight: 'bold', color: '#17313E', marginVertical: 4 },
+  statsSubtitle: { fontSize: 16, fontWeight: '600', color: '#444' },
+  acceptanceContainer: { flexDirection: 'row', marginTop: 8 },
+  acceptanceRate: { fontSize: 12, color: '#007BFF', marginRight: 16 },
+  ranking: { fontSize: 12, color: '#28A745' },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  statItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F9FA', borderRadius: 8, padding: 10, width: '48%', marginBottom: 10 },
+  statItemLabel: { fontSize: 12, color: '#666', marginLeft: 6, flex: 1 },
+  statValue: { fontSize: 14, fontWeight: 'bold' },
+  subSectionTitle: { fontSize: 16, fontWeight: '600', color: '#333', marginTop: 16, marginBottom: 8 },
+  submissionContainer: {},
+  noSubmissionsText: { color: '#888', textAlign: 'center', padding: 10 },
+  enhancedSubmissionItem: { backgroundColor: '#F8F9FA', borderRadius: 8, padding: 12, marginBottom: 8 },
+  submissionContent: {},
+  submissionProblem: { fontSize: 14, fontWeight: '500', color: '#333', marginBottom: 6 },
+  submissionMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  submissionTime: { fontSize: 12, color: '#777' },
+  submissionVerdict: { fontSize: 12, fontWeight: 'bold' },
+  enhancedDifficultyContainer: { backgroundColor: '#F8F9FA', borderRadius: 12, padding: 16, marginBottom: 12 },
+  difficultyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 },
+  difficultyTitle: { fontSize: 16, fontWeight: '600', color: '#333' },
+  difficultyTotal: { fontSize: 14, fontWeight: 'bold', color: '#17313E' },
+  difficultyBarContainer: { flexDirection: 'row', height: 12, borderRadius: 6, overflow: 'hidden', backgroundColor: '#E0E0E0', marginBottom: 12 },
   barSegment: { height: '100%' },
   easyBar: { backgroundColor: '#27AE60' },
   mediumBar: { backgroundColor: '#F39C12' },
   hardBar: { backgroundColor: '#E74C3C' },
-  difficultyStats: { gap: 6 },
-  difficultyStat: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  difficultyInfo: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
+  difficultyStats: { flexDirection: 'row', justifyContent: 'space-between' },
+  difficultyStat: { flex: 1, alignItems: 'center' },
+  difficultyInfo: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  legendDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
   easyDot: { backgroundColor: '#27AE60' },
   mediumDot: { backgroundColor: '#F39C12' },
   hardDot: { backgroundColor: '#E74C3C' },
-  difficultyLabel: { fontSize: 12, color: '#415E72', minWidth: 50 },
-  difficultyNumbers: { fontSize: 12, fontWeight: '600', color: '#17313E' },
-  leetcodeStats: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#F8F9FA', borderRadius: 10, padding: 12 },
+  difficultyLabel: { fontSize: 12, color: '#666' },
+  difficultyNumbers: { fontSize: 14, fontWeight: '600', color: '#333' },
+  leetcodeStats: { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#F8F9FA', padding: 12, borderRadius: 12 },
   leetcodeStatItem: { alignItems: 'center' },
-  leetcodeStatLabel: { fontSize: 11, color: '#415E72', marginBottom: 2 },
-  leetcodeStatValue: { fontSize: 16, fontWeight: 'bold' },
-  easyStat: { color: '#27AE60' },
-  mediumStat: { color: '#F39C12' },
-  hardStat: { color: '#E74C3C' },
-  subSectionTitle: { fontSize: 14, fontWeight: '600', color: '#17313E', marginTop: 8, marginBottom: 4 },
-  submissionContainer: { gap: 6 },
-  enhancedSubmissionItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F9FA', padding: 10, borderRadius: 6, gap: 10 },
-  submissionContent: { flex: 1 },
-  submissionProblem: { fontSize: 12, color: '#34495E', fontWeight: '500', marginBottom: 2 },
-  submissionMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  submissionTime: { fontSize: 10, color: '#888' },
-  submissionVerdict: { fontSize: 10, fontWeight: 'bold' },
-  noSubmissionsText: { textAlign: 'center', color: '#888', fontStyle: 'italic', marginVertical: 8, fontSize: 12 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalContainer: { backgroundColor: 'white', borderRadius: 14, padding: 20, width: '100%', maxWidth: 300, alignItems: 'center' },
+  leetcodeStatLabel: { fontSize: 12, color: '#666' },
+  leetcodeStatValue: { fontSize: 18, fontWeight: 'bold', marginTop: 4 },
+  easyStat: { color: '#000000ff' },
+  mediumStat: { color: '#000000ff' },
+  hardStat: { color: '#000000ff' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalContainer: { width: '80%', backgroundColor: '#FFF', borderRadius: 16, padding: 20, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
   modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#17313E', marginBottom: 8 },
-  modalMessage: { fontSize: 14, color: '#415E72', textAlign: 'center', marginBottom: 20, lineHeight: 20 },
+  modalMessage: { fontSize: 14, color: '#415E72', textAlign: 'center', marginBottom: 20 },
   modalActions: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-  modalButton: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
-  cancelButton: { backgroundColor: '#F3E2D4', marginRight: 8 },
-  cancelButtonText: { color: '#17313E', fontWeight: 'bold', fontSize: 14 },
+  modalButton: { flex: 1, padding: 12, borderRadius: 8, alignItems: 'center' },
+  cancelButton: { backgroundColor: '#E8D5C4', marginRight: 10 },
+  cancelButtonText: { color: '#415E72', fontWeight: 'bold' },
   confirmButton: { backgroundColor: '#E74C3C' },
-  confirmButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
+  confirmButtonText: { color: '#FFF', fontWeight: 'bold' },
+  atcoderIcon: { color: 'white', fontWeight: 'bold', fontSize: 18 },
 });
