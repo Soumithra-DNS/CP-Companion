@@ -1,50 +1,160 @@
-# Welcome to your Expo app 👋
+# CP Companion
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Track and grow your competitive programming journey across platforms with a clean, animated, and consistent mobile experience.
 
-## Get started
+[![Expo](https://img.shields.io/badge/Expo-000020?style=flat&logo=expo&logoColor=white)](https://expo.dev/)
+[![React Native](https://img.shields.io/badge/React%20Native-20232A?style=flat&logo=react&logoColor=61DAFB)](https://reactnative.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## Overview
 
-2. Start the app
+CP Companion is an Expo + React Native app that unifies your coding profiles and learning progress. It features elegant visuals, smooth animations, and simple inputs to connect Codeforces, LeetCode, GitHub, AtCoder, and HackerRank in one place.
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## Features
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- Unified Profiles (consistent layout and colors)
+  - Codeforces: rating, rank, contribution, friends, recent submissions
+  - LeetCode: total solved, difficulty breakdown, acceptance rate, ranking
+  - GitHub: name/bio, public repos, followers/following
+  - AtCoder: rating, max rating, rank, basic profile info (mock for now)
+  - HackerRank: level, followers, submissions, badges (mock for now)
+- Learning Journey
+  - Animated circular progress for mastered topics
+  - Quick stats and motivational tips
+- Clean UI/UX
+  - Consistent palette, accessible contrast, and subtle elevation
+  - Reusable components (headers, stat tiles, inputs, modals)
+- Local Persistence
+  - Handles cached with AsyncStorage; auto-restores on app open
+- Smooth Animations
+  - React Native Animated + react-native-svg progress ring
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## Tech Stack
 
-When you're ready, run:
+- Expo (React Native, TypeScript)
+- Expo Router
+- react-native-svg
+- @expo/vector-icons (MaterialIcons, FontAwesome5)
+- @react-native-async-storage/async-storage
+- Fetch-based API integration
 
+APIs used:
+- Codeforces API (user.info, user.status)
+- LeetCode community stats API (unofficial)
+- GitHub REST API v3
+- AtCoder and HackerRank currently mocked (no simple public APIs)
+
+---
+
+## Getting Started
+
+Prerequisites:
+- Node.js LTS
+- npm or yarn
+- Expo CLI (npx works fine)
+
+Install and run:
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Open the app:
+- Press a to open Android emulator
+- Press i to open iOS simulator (macOS)
+- Press w for web
+- Or scan the QR in Expo Go
 
-## Learn more
+Builds (optional):
+```bash
+# Android / iOS with EAS
+npx eas build --platform android
+npx eas build --platform ios
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Usage
 
-## Join the community
+- Open Profiles tab
+- Enter your handles:
+  - Codeforces handle (e.g., tourist)
+  - LeetCode username
+  - GitHub username
+  - AtCoder username (uses mock data)
+  - HackerRank username (uses mock data)
+- Tap Connect to fetch and persist
+- Tap header to open the platform profile in browser
+- Use Disconnect to clear saved IDs
 
-Join our community of developers creating universal apps.
+Learning Journey:
+- Tracks number of mastered topics (0–15) and animates a progress ring
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## Project Structure (simplified)
+
+```
+CP_Companion/
+├─ app/
+│  ├─ _layout.tsx
+│  ├─ index.tsx
+│  ├─ progress.tsx        # Profiles + Learning Journey
+│  └─ ...other screens
+├─ assets/                # (optional) images, fonts
+├─ package.json
+└─ README.md
+```
+
+Key file: app/progress.tsx
+- Modular sections per platform (header, stats, inputs, modals)
+- Animated progress ring (Svg + Animated)
+- AsyncStorage for persisted handles
+- Network calls with basic error handling and loading states
+
+---
+
+## Notes and Limitations
+
+- LeetCode stats rely on an unofficial community API and may be rate-limited.
+- AtCoder and HackerRank show placeholder/mock data.
+- Network errors are handled gracefully with short messages.
+
+---
+
+## Roadmap
+
+- Real AtCoder/HackerRank integrations
+- Contest calendar and reminders
+- Offline-first caches for stats
+- Theming and dark mode
+- Deeper analytics and streaks
+
+---
+
+## Contributing
+
+- Fork the repo
+- Create a branch: git checkout -b feat/your-feature
+- Commit: git commit -m "feat: add your feature"
+- Push: git push origin feat/your-feature
+- Open a Pull Request
+
+---
+
+## License
+
+Specify your license here (e.g., MIT). Add a LICENSE file if not present.
+
+---
+
+## Acknowledgments
+
+- Codeforces, LeetCode community, GitHub APIs
+- Expo and React Native community
