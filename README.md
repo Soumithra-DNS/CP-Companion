@@ -1,16 +1,33 @@
 # CP Companion
 
-Track and grow your competitive programming journey across platforms with a clean, animated, and consistent mobile experience.
+Unify your competitive programming journey across platforms with a clean, animated, and consistent mobile experience.
 
-[![Expo](https://img.shields.io/badge/Expo-000020?style=flat&logo=expo&logoColor=white)](https://expo.dev/)
-[![React Native](https://img.shields.io/badge/React%20Native-20232A?style=flat&logo=react&logoColor=61DAFB)](https://reactnative.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+<p align="center">
+  <a href="https://expo.dev/"><img src="https://img.shields.io/badge/Expo-000020?style=flat&logo=expo&logoColor=white" alt="Expo" /></a>
+  <a href="https://reactnative.dev/"><img src="https://img.shields.io/badge/React%20Native-20232A?style=flat&logo=react&logoColor=61DAFB" alt="React Native" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+</p>
+
+---
+
+## Table of Contents
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Notes & Limitations](#notes--limitations)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
 
 ---
 
 ## Overview
 
-CP Companion is an Expo + React Native app that unifies your coding profiles and learning progress. It features elegant visuals, smooth animations, and simple inputs to connect Codeforces, LeetCode, GitHub, AtCoder, and HackerRank in one place.
+CP Companion is an Expo + React Native app that brings your coding profiles and learning progress into one elegant view. It includes smooth animations, accessible colors, and simple inputs to connect Codeforces, LeetCode, GitHub, AtCoder, and HackerRank.
 
 ---
 
@@ -20,25 +37,24 @@ CP Companion is an Expo + React Native app that unifies your coding profiles and
   - Codeforces: rating, rank, contribution, friends, recent submissions
   - LeetCode: total solved, difficulty breakdown, acceptance rate, ranking
   - GitHub: name/bio, public repos, followers/following
-  - AtCoder: rating, max rating, rank, basic profile info (mock for now)
+  - AtCoder: rating, max rating, rank, basic info (mock for now)
   - HackerRank: level, followers, submissions, badges (mock for now)
 - Learning Journey
-  - Animated circular progress for mastered topics
-  - Quick stats and motivational tips
+  - Animated circular progress (0–15 topics)
+  - Quick stats and concise encouragement
 - Clean UI/UX
-  - Consistent palette, accessible contrast, and subtle elevation
-  - Reusable components (headers, stat tiles, inputs, modals)
+  - High-contrast palette, subtle elevation, reusable components
 - Local Persistence
-  - Handles cached with AsyncStorage; auto-restores on app open
+  - Handles cached with AsyncStorage and auto-restored
 - Smooth Animations
-  - React Native Animated + react-native-svg progress ring
+  - Animated + SVG progress ring, subtle section transitions
 
 ---
 
 ## Tech Stack
 
 - Expo (React Native, TypeScript)
-- Expo Router
+- Expo Router (file-based navigation)
 - react-native-svg
 - @expo/vector-icons (MaterialIcons, FontAwesome5)
 - @react-native-async-storage/async-storage
@@ -48,7 +64,7 @@ APIs used:
 - Codeforces API (user.info, user.status)
 - LeetCode community stats API (unofficial)
 - GitHub REST API v3
-- AtCoder and HackerRank currently mocked (no simple public APIs)
+- AtCoder & HackerRank currently mocked (no simple public APIs)
 
 ---
 
@@ -57,7 +73,7 @@ APIs used:
 Prerequisites:
 - Node.js LTS
 - npm or yarn
-- Expo CLI (npx works fine)
+- Expo (npx works fine)
 
 Install and run:
 ```bash
@@ -66,14 +82,14 @@ npx expo start
 ```
 
 Open the app:
-- Press a to open Android emulator
-- Press i to open iOS simulator (macOS)
+- Press a for Android emulator
+- Press i for iOS simulator (macOS)
 - Press w for web
-- Or scan the QR in Expo Go
+- Or scan the QR with Expo Go
 
-Builds (optional):
+Optional builds:
 ```bash
-# Android / iOS with EAS
+# EAS
 npx eas build --platform android
 npx eas build --platform ios
 ```
@@ -82,49 +98,48 @@ npx eas build --platform ios
 
 ## Usage
 
-- Open Profiles tab
-- Enter your handles:
+Profiles:
+- Open the Profiles tab
+- Enter:
   - Codeforces handle (e.g., tourist)
   - LeetCode username
   - GitHub username
-  - AtCoder username (uses mock data)
-  - HackerRank username (uses mock data)
+  - AtCoder username (mock)
+  - HackerRank username (mock)
 - Tap Connect to fetch and persist
-- Tap header to open the platform profile in browser
+- Tap the header to open the platform profile in the browser
 - Use Disconnect to clear saved IDs
 
 Learning Journey:
-- Tracks number of mastered topics (0–15) and animates a progress ring
+- Tracks mastered topics (0–15) with an animated circular progress ring
 
 ---
 
-## Project Structure (simplified)
+## Project Structure
 
 ```
 CP_Companion/
 ├─ app/
-│  ├─ _layout.tsx
-│  ├─ index.tsx
-│  ├─ progress.tsx        # Profiles + Learning Journey
+│  ├─ progress.tsx        # Profiles + Learning Journey (core screen)
 │  └─ ...other screens
 ├─ assets/                # (optional) images, fonts
 ├─ package.json
 └─ README.md
 ```
 
-Key file: app/progress.tsx
+Highlights in app/progress.tsx:
 - Modular sections per platform (header, stats, inputs, modals)
 - Animated progress ring (Svg + Animated)
 - AsyncStorage for persisted handles
-- Network calls with basic error handling and loading states
+- Loading states and concise error messages
 
 ---
 
-## Notes and Limitations
+## Notes & Limitations
 
-- LeetCode stats rely on an unofficial community API and may be rate-limited.
-- AtCoder and HackerRank show placeholder/mock data.
-- Network errors are handled gracefully with short messages.
+- LeetCode stats rely on an unofficial community API (may be rate-limited).
+- AtCoder and HackerRank sections use placeholder/mock data.
+- Network errors are handled with short, clear messages.
 
 ---
 
@@ -132,7 +147,7 @@ Key file: app/progress.tsx
 
 - Real AtCoder/HackerRank integrations
 - Contest calendar and reminders
-- Offline-first caches for stats
+- Offline caches for stats
 - Theming and dark mode
 - Deeper analytics and streaks
 
@@ -150,7 +165,7 @@ Key file: app/progress.tsx
 
 ## License
 
-Specify your license here (e.g., MIT). Add a LICENSE file if not present.
+Add your license (e.g., MIT) and include a LICENSE file.
 
 ---
 
