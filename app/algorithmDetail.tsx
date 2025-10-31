@@ -122,7 +122,6 @@ export default function AlgorithmDetail() {
   if (!algo) {
     return (
       <View style={[styles.page, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Header title="Error" />
         <Text style={styles.errorText}>Algorithm not found!</Text>
       </View>
     );
@@ -178,7 +177,6 @@ export default function AlgorithmDetail() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Enhanced Tab Row - বেগুনি কালার গাঢ় করা হয়েছে */}
         <View style={styles.tabContainer}>
           {["Algorithm", "Video", "Problem"].map((tab) => (
             <TouchableOpacity
@@ -212,14 +210,13 @@ export default function AlgorithmDetail() {
           ))}
         </View>
 
-        {/* Content Card - ডান কোনার আইকন রিমুভ করা হয়েছে */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>
               {selectedTab === "Algorithm" ? "Algorithm Overview" :
                selectedTab === "Video" ? "Video Tutorial" : "Practice Problem"}
             </Text>
-            {/* কার্ড আইকন রিমুভ করা হয়েছে */}
+
           </View>
 
           {selectedTab === "Algorithm" && (
@@ -242,16 +239,11 @@ export default function AlgorithmDetail() {
                 activeOpacity={0.7}
               >
                 <LinearGradient
-                  colors={[COLORS.accentLight, COLORS.accent]}
+                  colors={["rgba(192, 163, 225, 1)", "rgba(125, 77, 180, 1)"]}
                   style={styles.actionGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <MaterialIcons
-                    name="ondemand-video"
-                    size={24}
-                    color={COLORS.white}
-                  />
                   <Text style={styles.actionText}>Watch Video Tutorial</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -264,22 +256,20 @@ export default function AlgorithmDetail() {
 
           {selectedTab === "Problem" &&
             (algo.problemLink ? (
-              <TouchableOpacity
+                <TouchableOpacity
                 onPress={() => Linking.openURL(algo.problemLink)}
                 style={styles.actionButton}
                 activeOpacity={0.7}
-              >
+                >
                 <LinearGradient
-                  // updated to match "Watch Video Tutorial" colors
-                  colors={[COLORS.accentLight, COLORS.accent]}
+                  colors={["rgba(192, 163, 225, 1)", "rgba(125, 77, 180, 1)"]}
                   style={styles.actionGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <MaterialIcons name="code" size={24} color={COLORS.white} />
                   <Text style={styles.actionText}>Solve Practice Problem</Text>
                 </LinearGradient>
-              </TouchableOpacity>
+                </TouchableOpacity>
             ) : (
               <View style={styles.placeholderContainer}>
                 <MaterialIcons name="code" size={48} color={COLORS.translucentPrimary} />
@@ -306,7 +296,7 @@ export default function AlgorithmDetail() {
           <View style={styles.progressContainer}>
             <View style={styles.progressBar}>
               <LinearGradient
-                colors={[COLORS.primary, COLORS.accent]}
+                colors={["rgba(234, 226, 243, 1)", "rgba(149, 98, 208, 1)"]}
                 style={[
                   styles.progressFill,
                   { width: `${progressPercentage}%` },
@@ -324,7 +314,6 @@ export default function AlgorithmDetail() {
 
           {progressPercentage === 100 && (
             <View style={styles.completionBadge}>
-              {/* ইমোজি/আইকন রিমুভ করা হয়েছে - শুধু টেক্সট থাকবে */}
               <Text style={styles.completionText}>Topic Completed</Text>
             </View>
           )}
@@ -350,7 +339,7 @@ const Header = ({ title }: { title: string }) => {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: "#F3E2D4",
   },
   container: {
     flex: 1,
@@ -365,16 +354,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight || 20 : 60,
+    paddingTop: Platform.OS === "android" ? Number(StatusBar.currentHeight) || 20 : 60,
     paddingBottom: 16,
-    backgroundColor: COLORS.background,
-    borderBottomWidth: 1,
+    backgroundColor: "#F3E2D4",
+    borderBottomWidth: 0.2,
     borderBottomColor: COLORS.borderColor,
   },
   backButton: {
     padding: 8,
     marginLeft: -8,
-    backgroundColor: COLORS.translucentSecondary,
+    backgroundColor: "rgba(65, 94, 114, 0.1)",
     borderRadius: 10,
     width: 40,
     height: 40,
@@ -382,9 +371,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: COLORS.textDark,
+    fontSize: 25,
+    fontWeight: "600",
+    color: "#17313E",
     flex: 1,
     textAlign: 'center',
     marginHorizontal: 16,
@@ -394,13 +383,13 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: "row",
-    backgroundColor: COLORS.cardBg,
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
     borderRadius: 16,
     marginBottom: 24,
     padding: 4,
     borderWidth: 1,
     borderColor: COLORS.borderColor,
-    shadowColor: COLORS.shadow,
+    shadowColor: "rgba(23, 49, 62, 0.15)",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -414,7 +403,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activeTabButton: {
-    backgroundColor: COLORS.darkPurple, // গাঢ় বেগুনি কালার ব্যবহার করা হয়েছে
+    backgroundColor: "rgba(135, 94, 181, 1)",
   },
   tabContent: {
     flexDirection: 'row',
@@ -424,20 +413,20 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 14,
     fontWeight: "600",
-    color: COLORS.secondary,
+    color: "#415E72",
     marginLeft: 6,
   },
   activeTabText: {
-    color: COLORS.white,
+    color: "#FFFFFF",
   },
   card: {
-    backgroundColor: COLORS.cardBg,
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
     borderRadius: 20,
     padding: 24,
     marginBottom: 20,
     borderWidth: 1,
     borderColor: COLORS.borderColor,
-    shadowColor: COLORS.shadow,
+    shadowColor: "rgba(23, 49, 62, 0.15)",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -452,7 +441,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: COLORS.textDark,
+    color: "#17313E",
   },
   contentContainer: {
     paddingTop: 4,
@@ -460,7 +449,7 @@ const styles = StyleSheet.create({
   contentText: {
     fontSize: 16,
     lineHeight: 26,
-    color: COLORS.algoTextLight,
+    color: "rgba(23, 49, 62, 0.8)",
     fontWeight: "500",
   },
   actionButton: {
@@ -477,7 +466,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 16,
-    color: COLORS.white,
+    color: "#ffffffff",
     fontWeight: "600",
     marginLeft: 10,
   },
@@ -488,7 +477,7 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: 16,
-    color: COLORS.translucentPrimary,
+    color: "rgba(197, 176, 205, 0.3)",
     marginTop: 12,
     fontWeight: "500",
   },
@@ -508,12 +497,12 @@ const styles = StyleSheet.create({
   },
   checkText: {
     fontSize: 16,
-    color: COLORS.textDark,
+    color: "#17313E",
     fontWeight: "500",
     flex: 1,
   },
   checkTextDone: {
-    color: COLORS.success,
+    color: "#38A169",
   },
   checkmark: {
     marginLeft: 8,
@@ -523,7 +512,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 10,
-    backgroundColor: COLORS.translucentSecondary,
+    backgroundColor: "rgba(65, 94, 114, 0.1)",
     borderRadius: 5,
     overflow: "hidden",
     marginBottom: 8,
@@ -539,19 +528,19 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 12,
-    color: COLORS.algoTextLight,
+    color: "rgba(23, 49, 62, 0.8)",
     fontWeight: "500",
   },
   progressIndicator: {
-    backgroundColor: COLORS.translucentSecondary,
+    backgroundColor: "rgba(65, 94, 114, 0.1)",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
   },
   progressPercentage: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
-    color: COLORS.primary,
+    color: "rgba(135, 94, 181, 1)",
   },
   completionBadge: {
     flexDirection: "row",
@@ -568,13 +557,12 @@ const styles = StyleSheet.create({
   completionText: {
     fontSize: 14,
     fontWeight: "600",
-    color: COLORS.success,
-    // marginLeft রিমুভ করা হয়েছে কারণ এখন শুধু টেক্সট আছে
+    color: "#38A169",
   },
   errorText: {
-    fontSize: 16,
-    color: "#D32F2F",
+    fontSize: 22,
+    color: "#000000ff",
     textAlign: "center",
-    fontWeight: "500",
+    fontWeight: "600",
   },
 });

@@ -1,4 +1,3 @@
-import { SignedOut } from "@clerk/clerk-expo";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef } from "react";
@@ -84,15 +83,14 @@ export default function ProblemListScreen() {
       {/* Fixed header: stays visible while the list scrolls */}
       <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideUpAnim }] }]}>
         <View style={styles.headerRow}>
-          <MaterialIcons name="code" size={38} color={COLORS.textDark} />
           <Text style={styles.title}>
             <Text style={{ color: COLORS.textDark }}>Problem</Text>
             <Text style={{ color: COLORS.secondary }}> List</Text>
           </Text>
         </View>
-        <SignedOut>
+        {/* <SignedOut>
           <Text style={styles.subtitle}>Curated coding problem collections to boost your skills</Text>
-        </SignedOut>
+        </SignedOut> */}
       </Animated.View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
@@ -118,7 +116,7 @@ export default function ProblemListScreen() {
               <TouchableOpacity style={styles.cardTouchable} activeOpacity={0.9} onPress={() => openLink(item.url)}>
                 <View style={styles.cardLeft}>
                   <View style={styles.iconWrapper}>
-                    <MaterialIcons name="menu-book" size={22} color={COLORS.secondary} />
+                    <MaterialIcons name="code" size={25} color={COLORS.secondary} />
                   </View>
                   <Text style={styles.cardText}>{item.title}</Text>
                 </View>
@@ -183,7 +181,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: "rgba(197,176,205,0.18)",
+    borderColor: "rgba(192, 181, 181, 1)", // match resources page box border color
     overflow: "hidden",
     shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 6 },
@@ -231,3 +229,6 @@ const styles = StyleSheet.create({
     height: 28,
   },
 });
+
+
+

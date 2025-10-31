@@ -141,10 +141,10 @@ export default function ResourcesPage() {
       
       <View style={styles.container}>
         <View style={styles.header}>
-          <View style={styles.titleContainer}>
+          <View style={styles.headerRow}>
             <Text style={styles.pageTitle}>
-              Algorithm{" "}
-              <Text style={styles.pageTitleAccent}>Resources</Text>
+              <Text style={{ color: COLORS.textDark }}>Algorithm</Text>
+              <Text style={{ color: COLORS.secondary }}> Resources</Text>
             </Text>
           </View>
         </View>
@@ -186,24 +186,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   titleContainer: {
+    // kept for backward compatibility (not used after headerRow change)
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center", // center the title horizontally
+    justifyContent: "center",
     marginBottom: 8,
   },
   pageTitle: {
-    fontSize: 32,
-    fontWeight: "800",         // updated weight to be slightly lighter than 900
+    fontSize: 30,
+    fontWeight: "800",
     color: COLORS.textDark,
-    letterSpacing: 0.5,
-    textAlign: "center",      // ensure text is centered
+    letterSpacing: 0.2,
+    textAlign: "left",
   },
   pageTitleAccent: {
-    fontSize: 32,
-    fontWeight: "800",         // updated weight to be slightly lighter than 900
-    color: COLORS.textDark,
-    letterSpacing: 0.5,
-    textAlign: "center",         // keep accent same weight for consistency
+    // kept to allow explicit accent usage elsewhere
+    fontSize: 30,
+    fontWeight: "800",
+    color: COLORS.secondary,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  subtitle: {
+    color: COLORS.secondary,
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 4,
   },
   listContainer: {
     paddingBottom: 40,
@@ -219,7 +231,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.8)",
+    borderColor: "rgba(192, 181, 181, 1)",
   },
   cardHeader: {
     flexDirection: "row",
@@ -229,7 +241,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: "rgba(255, 255, 255, 0.6)",
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(197, 176, 205, 0.2)",
+    borderBottomColor: "rgba(132, 127, 127, 0.2)",
   },
   cardHeaderExpanded: {
     backgroundColor: COLORS.white,
@@ -273,7 +285,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(197, 176, 205, 0.15)",
+    borderBottomColor: "rgba(181, 159, 191, 0.15)",
   },
   lastAlgoButton: {
     borderBottomWidth: 0,
@@ -284,10 +296,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   algoBullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.primary,
+    width: 8,
+    height: 8,
+    borderRadius: 16,
+    backgroundColor: "rgba(108, 102, 102, 1)",
     marginRight: 16,
   },
   algoText: {

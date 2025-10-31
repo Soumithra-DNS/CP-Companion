@@ -1,6 +1,6 @@
 import { SignedIn, SignedOut, useClerk } from "@clerk/clerk-expo";
 import { MaterialIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+// import { LinearGradient } from "expo-linear-gradient"; // আর প্রয়োজন নেই
 import { Link, useRouter } from "expo-router";
 import React, { ComponentProps, useState } from "react";
 import {
@@ -15,7 +15,7 @@ import {
   View,
 } from "react-native";
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 const CARD_GAP = 16;
 const CARD_WIDTH = (width - 20 * 2 - CARD_GAP) / 2;
 
@@ -26,12 +26,14 @@ const COLORS = {
   textDark: "#17313E",
   white: "#FFFFFF",
   translucentPrimary: "rgba(197,176,205,0.4)",
-  translucentSecondary: "rgba(65,94,114,0.1)",
+  translucentSecondary: "rgba(65,94,114,0.1)", // ক্লোজ বাটনের জন্য ব্যবহৃত হবে
   cardBg: "rgba(255,255,255,0.85)",
   error: "#FF6347",
   menuOverlayBg: "rgba(23,49,62,0.4)",
-  featureCard: "#E8D5E0", // নতুন কার্ড কালার
-  featureCardDark: "#D2BFCF", // কার্ডের ডার্ক ভ্যারিয়েন্ট
+  featureCard: "#E8D5E0",
+  featureCardDark: "#D2BFCF",
+  menuBackground: "#F8EDE6", // হোম পেজের ব্যাকগ্রাউন্ডের সাথে মিলানো
+  menuBorder: "rgba(197,176,205,0.3)", // আপডেটেড বর্ডার কালার
 };
 
 type IconName = ComponentProps<typeof MaterialIcons>["name"];
@@ -71,9 +73,9 @@ const upcomingFeatures: Feature[] = [
 
 const FeatureCard = ({ feature }: { feature: Feature }) => (
   <Link href={feature.route as any} asChild>
-    <TouchableOpacity 
-      style={styles.cardWrapper} 
-      accessibilityLabel={feature.label} 
+    <TouchableOpacity
+      style={styles.cardWrapper}
+      accessibilityLabel={feature.label}
       accessibilityRole="button"
     >
       <View style={[styles.featureCard, { backgroundColor: feature.color }]}>
@@ -88,6 +90,9 @@ const FeatureCard = ({ feature }: { feature: Feature }) => (
   </Link>
 );
 
+// ---------------------------------
+// 🎨 SideMenu UI আপডেট করা হলো
+// ---------------------------------
 const SideMenu = ({
   menuItems,
   onClose,
@@ -100,49 +105,97 @@ const SideMenu = ({
   return (
     <Modal visible={true} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.menuOverlay}>
-        <TouchableOpacity 
-          style={styles.menuOverlayTouchable} 
-          onPress={onClose} 
-          activeOpacity={1} 
-        />
-        
-        <View style={[styles.menuContainer, styles.menuContainerPortrait]}>
-          <LinearGradient colors={[COLORS.primary, COLORS.secondary]} style={styles.menuHeader}>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <MaterialIcons name="menu" size={22} color={COLORS.white} />
-              <Text style={styles.menuTitle}> Menu</Text>
-            </View>
-            <TouchableOpacity 
-              onPress={onClose} 
-              style={styles.closeButton} 
-              accessibilityLabel="Close menu" 
-              accessibilityRole="button"
-            >
-              <MaterialIcons name="close" size={20} color={COLORS.white} />
-            </TouchableOpacity>
-          </LinearGradient>
-
-          <ScrollView style={styles.menuItemsContainer} contentContainerStyle={styles.menuItemsContent}>
-            {menuItems.map((item, idx) => {
-              const isSignOut = item.type === "action";
-              return (
+        <View style={styles.menuSideContainer}>
+          <View style={[styles.menuContainer, styles.menuContainerPortrait]}>
+            {/* Menu Header: LinearGradient সরিয়ে View ব্যবহার করা হলো */}
+            <View style={styles.menuHeader}>
+              <View style={styles.menuHeaderContent}>
+                <View style={styles.menuTitleContainer}>
+                  {/* আইকনের কালার পরিবর্তন করা হলো */}
+                  <MaterialIcons name="menu" size={22} color={COLORS.textDark} />
+                  {/* menuTitle স্টাইল আপডেট করা হয়েছে */}
+                  <Text style={styles.menuTitle}> Menu</Text>
+                </View>
                 <TouchableOpacity
-                  key={idx}
-                  style={[styles.menuItem, isSignOut && styles.signOutItem]}
-                  onPress={() => onItemPress(item)}
-                  accessibilityLabel={item.label}
+                  onPress={onClose}
+                  style={styles.closeButton} // স্টাইল আপডেট করা হয়েছে
+                  accessibilityLabel="Close menu"
                   accessibilityRole="button"
                 >
-                  <View style={[styles.menuIconContainer, { backgroundColor: isSignOut ? "rgba(255,99,71,0.12)" : COLORS.translucentPrimary }]}>
-                    <MaterialIcons name={item.icon} size={20} color={isSignOut ? COLORS.error : COLORS.textDark} />
-                  </View>
-                  <Text style={styles.menuItemText}>{item.label}</Text>
-                  <MaterialIcons name="chevron-right" size={18} color={isSignOut ? COLORS.error : COLORS.secondary} />
+                  {/* আইকনের কালার পরিবর্তন করা হলো */}
+                  <MaterialIcons name="close" size={20} color={COLORS.textDark} />
                 </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+              </View>
+            </View>
+
+            {/* Menu Items */}
+            <ScrollView
+              style={styles.menuItemsContainer}
+              contentContainerStyle={styles.menuItemsContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.menuSectionTitle}>Main Features</Text>
+              {menuItems
+                .filter((item) => item.type === "route" && mainFeatures.some((f) => f.label === item.label))
+                .map((item, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.menuItem} // স্টাইল (বর্ডার) আপডেট করা হয়েছে
+                    onPress={() => onItemPress(item)}
+                    accessibilityLabel={item.label}
+                    accessibilityRole="button"
+                  >
+                    <View style={[styles.menuIconContainer, { backgroundColor: COLORS.translucentPrimary }]}>
+                      <MaterialIcons name={item.icon} size={20} color={COLORS.textDark} />
+                    </View>
+                    <Text style={styles.menuItemText}>{item.label}</Text>
+                    <MaterialIcons name="chevron-right" size={18} color={COLORS.secondary} />
+                  </TouchableOpacity>
+                ))}
+
+              <Text style={styles.menuSectionTitle}>Upcoming Features</Text>
+              {menuItems
+                .filter((item) => item.type === "route" && upcomingFeatures.some((f) => f.label === item.label))
+                .map((item, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.menuItem} // স্টাইল (বর্ডার) আপডেট করা হয়েছে
+                    onPress={() => onItemPress(item)}
+                    accessibilityLabel={item.label}
+                    accessibilityRole="button"
+                  >
+                    <View style={[styles.menuIconContainer, { backgroundColor: COLORS.translucentPrimary }]}>
+                      <MaterialIcons name={item.icon} size={20} color={COLORS.textDark} />
+                    </View>
+                    <Text style={styles.menuItemText}>{item.label}</Text>
+                    <MaterialIcons name="chevron-right" size={18} color={COLORS.secondary} />
+                  </TouchableOpacity>
+                ))}
+
+              {/* Sign Out */}
+              {menuItems
+                .filter((item) => item.type === "action")
+                .map((item, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[styles.menuItem, styles.signOutItem]}
+                    onPress={() => onItemPress(item)}
+                    accessibilityLabel={item.label}
+                    accessibilityRole="button"
+                  >
+                    <View style={[styles.menuIconContainer, { backgroundColor: "rgba(255,99,71,0.12)" }]}>
+                      <MaterialIcons name={item.icon} size={20} color={COLORS.error} />
+                    </View>
+                    <Text style={[styles.menuItemText, { color: COLORS.error }]}>{item.label}</Text>
+                    <MaterialIcons name="chevron-right" size={18} color={COLORS.error} />
+                  </TouchableOpacity>
+                ))}
+            </ScrollView>
+          </View>
         </View>
+
+        {/* Overlay Touchable */}
+        <TouchableOpacity style={styles.menuOverlayTouchable} onPress={onClose} activeOpacity={1} />
       </View>
     </Modal>
   );
@@ -173,20 +226,20 @@ export default function HomeScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       {menuVisible && (
-        <SideMenu 
-          menuItems={menuItems} 
-          onClose={() => setMenuVisible(false)} 
-          onItemPress={handleMenuItemPress} 
+        <SideMenu
+          menuItems={menuItems}
+          onClose={() => setMenuVisible(false)}
+          onItemPress={handleMenuItemPress}
         />
       )}
 
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/* হেডার সেকশন */}
+        {/* Header Section */}
         <View style={styles.headerRow}>
-          <TouchableOpacity 
-            onPress={() => setMenuVisible(true)} 
-            style={styles.menuButton} 
-            accessibilityLabel="Open menu" 
+          <TouchableOpacity
+            onPress={() => setMenuVisible(true)}
+            style={styles.menuButton}
+            accessibilityLabel="Open menu"
             accessibilityRole="button"
           >
             <View style={styles.menuButtonInner}>
@@ -201,8 +254,8 @@ export default function HomeScreen() {
               <Text style={{ color: COLORS.secondary }}> Companion</Text>
             </Text>
           </View>
-          
-          {/* স্পেসার - টাইটেল সেন্টার রাখার জন্য */}
+
+          {/* Spacer for centering */}
           <View style={styles.menuButtonPlaceholder} />
         </View>
 
@@ -253,6 +306,9 @@ export default function HomeScreen() {
   );
 }
 
+// ---------------------------------
+// 🎨 StyleSheet আপডেট করা হলো
+// ---------------------------------
 const styles = StyleSheet.create({
   page: {
     flex: 1,
@@ -267,7 +323,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between", // টাইটেল সেন্টারে রাখার জন্য
+    justifyContent: "space-between",
     marginBottom: 20,
     paddingHorizontal: 4,
   },
@@ -282,10 +338,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(197,176,205,0.3)",
+    borderColor: COLORS.menuBorder,
   },
   menuButtonPlaceholder: {
-    width: 40, // মেনু বাটনের সমান স্পেস
+    width: 40,
   },
   titleContainer: {
     flexDirection: "row",
@@ -401,66 +457,95 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  // Menu Styles - Left Side
   menuOverlay: {
     flex: 1,
     flexDirection: "row",
     backgroundColor: COLORS.menuOverlayBg,
   },
-  menuOverlayTouchable: {
-    flex: 1,
+  menuSideContainer: {
+    flexDirection: "row",
   },
   menuContainer: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.menuBackground,
     height: "100%",
     shadowColor: COLORS.textDark,
-    shadowOffset: { width: 8, height: 0 },
-    shadowOpacity: 0.12,
+    shadowOffset: { width: 4, height: 0 },
+    shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 12,
+    borderRightWidth: 1,
+    borderRightColor: COLORS.menuBorder,
   },
   menuContainerPortrait: {
-    width: "85%",
+    width: Platform.OS === "web" ? 320 : "85%",
     maxWidth: 320,
   },
+  // --- স্টাইল আপডেট করা হলো ---
   menuHeader: {
     padding: 18,
     paddingTop: (Platform.OS === "android" ? StatusBar.currentHeight || 24 : 50) + 10,
     paddingBottom: 14,
+    backgroundColor: COLORS.menuBackground, // গ্রেডিয়েন্টের বদলে সলিড কালার
+    borderBottomWidth: 1, // বর্ডার যোগ করা হলো
+    borderBottomColor: COLORS.menuBorder, // বর্ডার কালার
+  },
+  // --- স্টাইল আপডেট করা হলো ---
+  menuHeaderContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
+  menuTitleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  // --- স্টাইল আপডেট করা হলো ---
   menuTitle: {
-    color: COLORS.white,
+    color: COLORS.textDark, // কালার পরিবর্তন করা হলো
     fontSize: 20,
     fontWeight: "800",
     marginLeft: 8,
   },
+  // --- স্টাইল আপডেট করা হলো ---
   closeButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.16)",
+    backgroundColor: COLORS.translucentSecondary, // ব্যাকগ্রাউন্ড পরিবর্তন করা হলো
   },
   menuItemsContainer: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.menuBackground,
   },
   menuItemsContent: {
     paddingVertical: 12,
     paddingBottom: 40,
   },
+  menuSectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.secondary,
+    marginTop: 16,
+    marginBottom: 8,
+    marginHorizontal: 18,
+    paddingLeft: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.primary,
+  },
+  // --- স্টাইল আপডেট করা হলো ---
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 14,
     paddingHorizontal: 18,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.translucentSecondary,
+    borderBottomColor: COLORS.menuBorder, // বর্ডার কালার পরিবর্তন করা হলো
+    backgroundColor: COLORS.menuBackground,
   },
   signOutItem: {
-    marginTop: 8,
+    marginTop: 20,
     borderTopWidth: 1,
-    borderTopColor: COLORS.translucentSecondary,
+    borderTopColor: COLORS.menuBorder, // বর্ডার কালার পরিবর্তন করা হলো
     borderBottomWidth: 0,
   },
   menuIconContainer: {
@@ -475,6 +560,9 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
     fontSize: 16,
     fontWeight: "500",
+    flex: 1,
+  },
+  menuOverlayTouchable: {
     flex: 1,
   },
 });
