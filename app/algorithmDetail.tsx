@@ -1,21 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Linking, 
+import { MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  Linking,
+  Platform,
   ScrollView,
   StatusBar,
-  Platform 
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { AntDesign, MaterialIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import algoDetails from "./algoDetails"; // Import algorithm details
+import algoDetails from "./algoDetails";
 
-// Define types for our data structures
 type AlgorithmDetails = {
   [key: string]: {
     description: string;
@@ -31,27 +30,35 @@ type TicState = {
   counted: boolean;
 };
 
-type TicType = keyof Omit<TicState, 'counted'>;
+type TicType = keyof Omit<TicState, "counted">;
 
-// Updated color palette
 const COLORS = {
-  darkBg: '#0f172a',
-  primary: '#402E7A',    // Deep purple
-  secondary: '#4C3BCF',  // Purple
-  accent1: '#4B70F5',    // Blue
-  accent2: '#3DC2EC',    // Light blue
-  white: '#FFFFFF',
-  translucentWhite: 'rgba(255, 255, 255, 0.7)',
-  cardBg: 'rgba(255, 255, 255, 0.08)',
-  borderColor: 'rgba(255, 255, 255, 0.2)',
-  success: '#4CAF50',
-  warning: '#FF5722',
+  background: "#F3E2D4",
+  primary: "#C5B0CD",
+  secondary: "#415E72",
+  textDark: "#17313E",
+  accent: "#A78FAF",
+  accentLight: "#DCC8F0",
+  cardBg: "rgba(255, 255, 255, 0.7)",
+  white: "#FFFFFF",
+  lightCream: "#FAF5F0",
+  mediumCream: "#E8D5C4",
+  darkCream: "#D4C1A8",
+  translucentPrimary: "rgba(197, 176, 205, 0.3)",
+  translucentSecondary: "rgba(65, 94, 114, 0.1)",
+  borderColor: "rgba(197, 176, 205, 0.4)",
+  algoTextLight: "rgba(23, 49, 62, 0.8)",
+  shadow: "rgba(23, 49, 62, 0.15)",
+  success: "#38A169",
+  linkBlue: "#3182CE",
+  linkBlueLight: "#63B3ED",
+  // গাঢ় বেগুনি কালার এড করুন
+  darkPurple: "#8B78A1",
 };
 
 export default function AlgorithmDetail() {
   const { title } = useLocalSearchParams();
-  // Ensure title is a string by taking the first element if it's an array
-  const titleString = Array.isArray(title) ? title[0] : title || '';
+  const titleString = Array.isArray(title) ? title[0] : title || "";
   const algo = (algoDetails as AlgorithmDetails)[titleString];
   const router = useRouter();
 
@@ -81,9 +88,13 @@ export default function AlgorithmDetail() {
     const updatedTics = { ...selectedTics, [type]: !selectedTics[type] };
     setSelectedTics(updatedTics);
     try {
-      await AsyncStorage.setItem(`tic-${titleString}`, JSON.stringify(updatedTics));
+      await AsyncStorage.setItem(
+        `tic-${titleString}`,
+        JSON.stringify(updatedTics)
+      );
 
-      const allDone = updatedTics.algorithm && updatedTics.video && updatedTics.problem;
+      const allDone =
+        updatedTics.algorithm && updatedTics.video && updatedTics.problem;
       let newLearnedTopics = 0;
       const savedLearned = await AsyncStorage.getItem("learnedTopics");
       let currentLearned = savedLearned ? parseInt(savedLearned) : 0;
@@ -99,7 +110,10 @@ export default function AlgorithmDetail() {
       }
 
       await AsyncStorage.setItem("learnedTopics", newLearnedTopics.toString());
-      await AsyncStorage.setItem(`tic-${titleString}`, JSON.stringify(updatedTics));
+      await AsyncStorage.setItem(
+        `tic-${titleString}`,
+        JSON.stringify(updatedTics)
+      );
     } catch (error) {
       console.error("Failed to update and save progress:", error);
     }
@@ -107,295 +121,460 @@ export default function AlgorithmDetail() {
 
   if (!algo) {
     return (
-      <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.gradient}>
-        <View style={styles.container}>
-          <Text style={styles.errorText}>Algorithm not found!</Text>
-        </View>
-      </LinearGradient>
+      <View style={[styles.page, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Header title="Error" />
+        <Text style={styles.errorText}>Algorithm not found!</Text>
+      </View>
     );
   }
 
-  return (
-    <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.gradient}>
-      <StatusBar barStyle="light-content" />
-      
-      {/* Custom Header - No Back Button */}
-      <View style={styles.header}>
+  const progressPercentage = Math.round(
+    ((selectedTics.algorithm ? 1 : 0) +
+      (selectedTics.video ? 1 : 0) +
+      (selectedTics.problem ? 1 : 0)) /
+      3 *
+    100
+  );
+
+  const renderChecklistItem = (type: TicType, text: string) => (
+    <TouchableOpacity
+      onPress={() => handleTic(type)}
+      style={styles.checklistItem}
+      activeOpacity={0.6}
+    >
+      <View style={styles.checkboxContainer}>
+        <MaterialIcons
+          name={selectedTics[type] ? "check-circle" : "radio-button-unchecked"}
+          size={26}
+          color={selectedTics[type] ? COLORS.success : COLORS.secondary}
+        />
       </View>
+      <Text
+        style={[
+          styles.checkText,
+          selectedTics[type] && styles.checkTextDone,
+        ]}
+      >
+        {text}
+      </Text>
+      {selectedTics[type] && (
+        <MaterialIcons 
+          name="check" 
+          size={18} 
+          color={COLORS.success} 
+          style={styles.checkmark}
+        />
+      )}
+    </TouchableOpacity>
+  );
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>{titleString}</Text>
+  return (
+    <View style={styles.page}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <Header title={titleString} />
 
-        <View style={styles.tabRow}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Enhanced Tab Row - বেগুনি কালার গাঢ় করা হয়েছে */}
+        <View style={styles.tabContainer}>
           {["Algorithm", "Video", "Problem"].map((tab) => (
             <TouchableOpacity
               key={tab}
               onPress={() => setSelectedTab(tab)}
-              style={[styles.tabButton, selectedTab === tab && styles.activeTab]}
+              style={[
+                styles.tabButton,
+                selectedTab === tab && styles.activeTabButton,
+              ]}
+              activeOpacity={0.7}
             >
-              <Text style={[styles.tabText, selectedTab === tab && styles.activeTabText]}>{tab}</Text>
+              <View style={styles.tabContent}>
+                <MaterialIcons
+                  name={
+                    tab === "Algorithm" ? "description" :
+                    tab === "Video" ? "ondemand-video" : "code"
+                  }
+                  size={20}
+                  color={selectedTab === tab ? COLORS.white : COLORS.secondary}
+                />
+                <Text
+                  style={[
+                    styles.tabText,
+                    selectedTab === tab && styles.activeTabText,
+                  ]}
+                >
+                  {tab}
+                </Text>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
 
+        {/* Content Card - ডান কোনার আইকন রিমুভ করা হয়েছে */}
         <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>
+              {selectedTab === "Algorithm" ? "Algorithm Overview" :
+               selectedTab === "Video" ? "Video Tutorial" : "Practice Problem"}
+            </Text>
+            {/* কার্ড আইকন রিমুভ করা হয়েছে */}
+          </View>
+
           {selectedTab === "Algorithm" && (
-            <Text style={styles.contentText}>{algo.description || "No description available yet."}</Text>
+            <View style={styles.contentContainer}>
+              <Text style={styles.contentText}>
+                {algo.description || "No description available yet."}
+              </Text>
+            </View>
           )}
 
-          {selectedTab === "Video" && (
-            algo.videoId ? (
-              <TouchableOpacity 
-                onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${algo.videoId}`)}
-                style={styles.linkButton}
+          {selectedTab === "Video" &&
+            (algo.videoId ? (
+              <TouchableOpacity
+                onPress={() =>
+                  Linking.openURL(
+                    `https://www.youtube.com/watch?v=${algo.videoId}`
+                  )
+                }
+                style={styles.actionButton}
+                activeOpacity={0.7}
               >
-                <LinearGradient 
-                  colors={[COLORS.accent1, COLORS.accent2]} 
-                  style={styles.linkGradient}
+                <LinearGradient
+                  colors={[COLORS.accentLight, COLORS.accent]}
+                  style={styles.actionGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <MaterialIcons name="ondemand-video" size={24} color={COLORS.white} />
-                  <Text style={styles.linkText}>Watch Video Tutorial</Text>
+                  <MaterialIcons
+                    name="ondemand-video"
+                    size={24}
+                    color={COLORS.white}
+                  />
+                  <Text style={styles.actionText}>Watch Video Tutorial</Text>
                 </LinearGradient>
               </TouchableOpacity>
             ) : (
-              <Text style={styles.contentText}>No video available yet.</Text>
-            )
-          )}
+              <View style={styles.placeholderContainer}>
+                <MaterialIcons name="video-library" size={48} color={COLORS.translucentPrimary} />
+                <Text style={styles.placeholderText}>No video available yet</Text>
+              </View>
+            ))}
 
-          {selectedTab === "Problem" && (
-            algo.problemLink ? (
-              <TouchableOpacity 
+          {selectedTab === "Problem" &&
+            (algo.problemLink ? (
+              <TouchableOpacity
                 onPress={() => Linking.openURL(algo.problemLink)}
-                style={styles.linkButton}
+                style={styles.actionButton}
+                activeOpacity={0.7}
               >
-                <LinearGradient 
-                  colors={[COLORS.primary, COLORS.secondary]} 
-                  style={styles.linkGradient}
+                <LinearGradient
+                  // updated to match "Watch Video Tutorial" colors
+                  colors={[COLORS.accentLight, COLORS.accent]}
+                  style={styles.actionGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
                   <MaterialIcons name="code" size={24} color={COLORS.white} />
-                  <Text style={styles.linkText}>Solve Practice Problem</Text>
+                  <Text style={styles.actionText}>Solve Practice Problem</Text>
                 </LinearGradient>
               </TouchableOpacity>
             ) : (
-              <Text style={styles.contentText}>No problem available yet.</Text>
-            )
-          )}
+              <View style={styles.placeholderContainer}>
+                <MaterialIcons name="code" size={48} color={COLORS.translucentPrimary} />
+                <Text style={styles.placeholderText}>No practice problem available</Text>
+              </View>
+            ))}
         </View>
 
-        <View style={styles.ticRow}>
-          {(["algorithm", "video", "problem"] as TicType[]).map((type) => (
-            <TouchableOpacity
-              key={type}
-              onPress={() => handleTic(type)}
-              style={styles.ticContainer}
-            >
-              <LinearGradient 
-                colors={selectedTics[type] ? [COLORS.success, '#3d8b40'] : [COLORS.warning, '#e64a19']} 
-                style={styles.ticGradient}
+        {/* Progress Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Learning Progress</Text>
+            <View style={styles.progressIndicator}>
+              <Text style={styles.progressPercentage}>{progressPercentage}%</Text>
+            </View>
+          </View>
+
+          <View style={styles.checklistContainer}>
+            {renderChecklistItem("algorithm", "Read Algorithm Explanation")}
+            {renderChecklistItem("video", "Watched Video Tutorial")}
+            {renderChecklistItem("problem", "Solved Practice Problem")}
+          </View>
+
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <LinearGradient
+                colors={[COLORS.primary, COLORS.accent]}
+                style={[
+                  styles.progressFill,
+                  { width: `${progressPercentage}%` },
+                ]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-              >
-                <AntDesign
-                  name={selectedTics[type] ? "checkcircle" : "checkcircleo"}
-                  size={24}
-                  color={COLORS.white}
-                />
-                <Text style={styles.ticText}>{type.charAt(0).toUpperCase() + type.slice(1)}</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Progress Indicator */}
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>Completion Progress</Text>
-          <View style={styles.progressBar}>
-            <LinearGradient 
-              colors={[COLORS.accent1, COLORS.accent2]} 
-              style={[
-                styles.progressFill, 
-                { 
-                  width: `${((selectedTics.algorithm ? 1 : 0) + 
-                            (selectedTics.video ? 1 : 0) + 
-                            (selectedTics.problem ? 1 : 0)) / 3 * 100}%` 
-                }
-              ]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            />
+              />
+            </View>
+            <View style={styles.progressLabels}>
+              <Text style={styles.progressLabel}>0%</Text>
+              <Text style={styles.progressLabel}>50%</Text>
+              <Text style={styles.progressLabel}>100%</Text>
+            </View>
           </View>
-          <Text style={styles.progressPercent}>
-            {Math.round(((selectedTics.algorithm ? 1 : 0) + 
-                        (selectedTics.video ? 1 : 0) + 
-                        (selectedTics.problem ? 1 : 0)) / 3 * 100)}% Complete
-          </Text>
+
+          {progressPercentage === 100 && (
+            <View style={styles.completionBadge}>
+              {/* ইমোজি/আইকন রিমুভ করা হয়েছে - শুধু টেক্সট থাকবে */}
+              <Text style={styles.completionText}>Topic Completed</Text>
+            </View>
+          )}
         </View>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 
+const Header = ({ title }: { title: string }) => {
+  const router = useRouter();
+  return (
+    <View style={styles.header}>
+
+      <Text style={styles.headerTitle} numberOfLines={1}>
+        {title}
+      </Text>
+      <View style={styles.headerRight} />
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
-  gradient: {
+  page: {
     flex: 1,
+    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 30,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    paddingTop: 10,
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight || 20 : 60,
+    paddingBottom: 16,
+    backgroundColor: COLORS.background,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderColor,
+  },
+  backButton: {
+    padding: 8,
+    marginLeft: -8,
+    backgroundColor: COLORS.translucentSecondary,
+    borderRadius: 10,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: COLORS.textDark,
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 16,
+  },
+  headerRight: {
+    width: 40,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 16,
+    marginBottom: 24,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeTabButton: {
+    backgroundColor: COLORS.darkPurple, // গাঢ় বেগুনি কালার ব্যবহার করা হয়েছে
+  },
+  tabContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight) : 20,
-  },
-  logoIcon: {
-    marginRight: 12,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.white,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: COLORS.white,
-    textAlign: 'center',
-    marginBottom: 25,
-    marginTop: 10,
-  },
-  tabRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-  },
-  tabButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    backgroundColor: COLORS.cardBg,
-    borderWidth: 1,
-    borderColor: COLORS.borderColor,
-  },
-  activeTab: {
-    backgroundColor: COLORS.primary,
   },
   tabText: {
-    fontWeight: '600',
-    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.secondary,
+    marginLeft: 6,
   },
   activeTabText: {
     color: COLORS.white,
   },
   card: {
     backgroundColor: COLORS.cardBg,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 25,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: COLORS.borderColor,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 5,
-      },
-      web: {
-        boxShadow: "0px 4px 12px rgba(0,0,0,0.2)",
-      }
-    }),
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: COLORS.textDark,
+  },
+  contentContainer: {
+    paddingTop: 4,
   },
   contentText: {
     fontSize: 16,
-    color: COLORS.white,
-    lineHeight: 24,
+    lineHeight: 26,
+    color: COLORS.algoTextLight,
+    fontWeight: "500",
   },
-  linkButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
+  actionButton: {
+    borderRadius: 14,
+    overflow: "hidden",
+    marginTop: 8,
   },
-  linkGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
+  actionGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 18,
+    borderRadius: 14,
   },
-  linkText: {
+  actionText: {
     fontSize: 16,
     color: COLORS.white,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 10,
   },
-  ticRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 30,
+  placeholderContainer: {
+    alignItems: "center",
+    paddingVertical: 32,
+    paddingHorizontal: 20,
   },
-  ticContainer: {
-    flex: 1,
-    marginHorizontal: 5,
-    borderRadius: 12,
-    overflow: 'hidden',
+  placeholderText: {
+    fontSize: 16,
+    color: COLORS.translucentPrimary,
+    marginTop: 12,
+    fontWeight: "500",
   },
-  ticGradient: {
+  checklistContainer: {
+    marginBottom: 8,
+  },
+  checklistItem: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderRadius: 12,
+    marginBottom: 4,
   },
-  ticText: {
-    fontWeight: '600',
-    color: COLORS.white,
-    textTransform: 'capitalize',
-    marginTop: 5,
+  checkboxContainer: {
+    marginRight: 16,
+  },
+  checkText: {
+    fontSize: 16,
+    color: COLORS.textDark,
+    fontWeight: "500",
+    flex: 1,
+  },
+  checkTextDone: {
+    color: COLORS.success,
+  },
+  checkmark: {
+    marginLeft: 8,
   },
   progressContainer: {
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: COLORS.borderColor,
-  },
-  progressText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.white,
-    marginBottom: 10,
+    marginTop: 16,
   },
   progressBar: {
     height: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: COLORS.translucentSecondary,
     borderRadius: 5,
-    overflow: 'hidden',
-    marginBottom: 10,
+    overflow: "hidden",
+    marginBottom: 8,
   },
   progressFill: {
-    height: '100%',
+    height: "100%",
     borderRadius: 5,
   },
-  progressPercent: {
+  progressLabels: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 4,
+  },
+  progressLabel: {
+    fontSize: 12,
+    color: COLORS.algoTextLight,
+    fontWeight: "500",
+  },
+  progressIndicator: {
+    backgroundColor: COLORS.translucentSecondary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  progressPercentage: {
     fontSize: 14,
-    color: COLORS.accent2,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "700",
+    color: COLORS.primary,
+  },
+  completionBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(56, 161, 105, 0.1)",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "rgba(56, 161, 105, 0.2)",
+  },
+  completionText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.success,
+    // marginLeft রিমুভ করা হয়েছে কারণ এখন শুধু টেক্সট আছে
   },
   errorText: {
-    fontSize: 18,
-    color: '#D32F2F',
-    textAlign: 'center',
-    marginTop: 50,
+    fontSize: 16,
+    color: "#D32F2F",
+    textAlign: "center",
+    fontWeight: "500",
   },
 });
