@@ -1,6 +1,6 @@
 # CP Companion
 
-Unify your competitive programming journey across platforms with a clean, animated, and consistent mobile experience.
+Unify your competitive programming journey across platforms with a clean, animated, and responsive experience (mobile + web).
 
 <p align="center">
   <a href="https://expo.dev/"><img src="https://img.shields.io/badge/Expo-000020?style=flat&logo=expo&logoColor=white" alt="Expo" /></a>
@@ -27,27 +27,30 @@ Unify your competitive programming journey across platforms with a clean, animat
 
 ## Overview
 
-CP Companion is an Expo + React Native app that brings your coding profiles and learning progress into one elegant view. It includes smooth animations, accessible colors, and simple inputs to connect Codeforces, LeetCode, GitHub, AtCoder, and HackerRank.
+CP Companion is an Expo + React Native app that brings your profiles, contests and learning progress into one elegant view. The UI is responsive for both mobile and web: on desktop/web the main content is centered and constrained for better readability.
 
 ---
 
 ## Features
 
-- Unified Profiles (consistent layout and colors)
-  - Codeforces: rating, rank, contribution, friends, recent submissions
-  - LeetCode: total solved, difficulty breakdown, acceptance rate, ranking
-  - GitHub: name/bio, public repos, followers/following
-  - AtCoder: rating, max rating, rank, basic info (mock for now)
-  - HackerRank: level, followers, submissions, badges (mock for now)
+- Unified Profiles & Stats
+  - Codeforces: rating, rank, contribution, recent submissions (verdicts normalized to AC / WA)
+  - AtCoder: contest listing integration (uses kenkoooo aggregated feed)
+  - LeetCode: optional (disabled by default)
+  - GitHub: basic profile info (if configured)
+- Contest Schedule
+  - Aggregates contests from Codeforces and AtCoder
+  - Validates incoming contest data and hides invalid entries
+  - Sections: Live, Upcoming, Past
+  - "See more" buttons for Live / Upcoming / Past to incrementally reveal items
+  - Clean cards with gradient backgrounds and status badges
+  - Web: scrollbar hidden and main container centered with max width for desktop
 - Learning Journey
-  - Animated circular progress (0–15 topics)
-  - Quick stats and concise encouragement
-- Clean UI/UX
-  - High-contrast palette, subtle elevation, reusable components
-- Local Persistence
-  - Handles cached with AsyncStorage and auto-restored
-- Smooth Animations
-  - Animated + SVG progress ring, subtle section transitions
+  - Animated progress & checklist for algorithm topics
+  - Algorithm detail pages match Resources layout and are constrained on web
+- UX & Accessibility
+  - High-contrast palette, subtle elevation, consistent card styling
+  - Local persistence via AsyncStorage for progress/ticks
 
 ---
 
@@ -56,15 +59,14 @@ CP Companion is an Expo + React Native app that brings your coding profiles and 
 - Expo (React Native, TypeScript)
 - Expo Router (file-based navigation)
 - react-native-svg
-- @expo/vector-icons (MaterialIcons, FontAwesome5)
+- @expo/vector-icons
 - @react-native-async-storage/async-storage
-- Fetch-based API integration
+- axios for network requests
 
 APIs used:
-- Codeforces API (user.info, user.status)
-- LeetCode community stats API (unofficial)
-- GitHub REST API v3
-- AtCoder & HackerRank currently mocked (no simple public APIs)
+- Codeforces API (contest list + user submissions)
+- AtCoder contests feed (kenkoooo.com aggregated contests.json)
+- LeetCode GraphQL (optional / disabled by default)
 
 ---
 
@@ -73,7 +75,7 @@ APIs used:
 Prerequisites:
 - Node.js LTS
 - npm or yarn
-- Expo (npx works fine)
+- Expo CLI (npx expo start works)
 
 Install and run:
 ```bash
@@ -82,36 +84,24 @@ npx expo start
 ```
 
 Open the app:
-- Press a for Android emulator
-- Press i for iOS simulator (macOS)
-- Press w for web
+- Press `a` for Android emulator
+- Press `i` for iOS simulator (macOS)
+- Press `w` for web
 - Or scan the QR with Expo Go
-
-Optional builds:
-```bash
-# EAS
-npx eas build --platform android
-npx eas build --platform ios
-```
 
 ---
 
 ## Usage
 
-Profiles:
-- Open the Profiles tab
-- Enter:
-  - Codeforces handle (e.g., tourist)
-  - LeetCode username
-  - GitHub username
-  - AtCoder username (mock)
-  - HackerRank username (mock)
-- Tap Connect to fetch and persist
-- Tap the header to open the platform profile in the browser
-- Use Disconnect to clear saved IDs
-
-Learning Journey:
-- Tracks mastered topics (0–15) with an animated circular progress ring
+- Profiles:
+  - Enter platform handles and connect (persisted locally).
+  - Submissions verdicts are normalized (OK/AC -> AC, WRONG_* -> WA).
+- Contests:
+  - Open the Contests tab to see Live / Upcoming / Past sections.
+  - Use "See more" to reveal more items.
+  - Invalid contest entries (bad/missing timestamps or URL) are filtered out.
+- Learning / Resources:
+  - Algorithm Resources and Algorithm Detail pages share the same centered, card-based layout on web and mobile.
 
 ---
 
@@ -120,46 +110,40 @@ Learning Journey:
 ```
 CP_Companion/
 ├─ app/
-│  ├─ progress.tsx        # Profiles + Learning Journey (core screen)
+│  ├─ progress.tsx        # Profiles + Learning Journey
+│  ├─ resources.tsx       # Algorithm resources (responsive)
+│  ├─ algorithmDetail.tsx # Topic details (responsive)
+│  ├─ contestTime.tsx     # Contest schedule (Codeforces + AtCoder)
 │  └─ ...other screens
-├─ assets/                # (optional) images, fonts
+├─ assets/
 ├─ package.json
 └─ README.md
 ```
-
-Highlights in app/progress.tsx:
-- Modular sections per platform (header, stats, inputs, modals)
-- Animated progress ring (Svg + Animated)
-- AsyncStorage for persisted handles
-- Loading states and concise error messages
 
 ---
 
 ## Notes & Limitations
 
-- LeetCode stats rely on an unofficial community API (may be rate-limited).
-- AtCoder and HackerRank sections use placeholder/mock data.
-- Network errors are handled with short, clear messages.
+- LeetCode integration is optional and may be disabled by default.
+- AtCoder uses a community-aggregated feed (kenkoooo) as a reliable source.
+- Browser (web) requests are subject to CORS — some remote APIs may not be reachable from the browser.
+- The back button was removed from the algorithm detail header for a simplified layout (use navigation history).
 
 ---
 
 ## Roadmap
 
-- Real AtCoder/HackerRank integrations
-- Contest calendar and reminders
-- Offline caches for stats
-- Theming and dark mode
-- Deeper analytics and streaks
+- Add deeper AtCoder profile integration
+- Improve LeetCode reliability (rate limiting handling)
+- Add user settings and theming (dark mode)
+- Offline caching and background updates
 
 ---
 
 ## Contributing
 
-- Fork the repo
-- Create a branch: git checkout -b feat/your-feature
-- Commit: git commit -m "feat: add your feature"
-- Push: git push origin feat/your-feature
-- Open a Pull Request
+- Fork → branch → commit → PR
+- Follow code style and include brief tests where applicable
 
 ---
 
@@ -171,5 +155,5 @@ Add your license (e.g., MIT) and include a LICENSE file.
 
 ## Acknowledgments
 
-- Codeforces, LeetCode community, GitHub APIs
+- Codeforces, AtCoder community feeds, LeetCode community
 - Expo and React Native community
