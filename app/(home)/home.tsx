@@ -257,6 +257,18 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: COLORS.background },
+  // base container used on mobile and small screens
+  container: {
+    flex: 1,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight || 40 : 60,
+    paddingHorizontal: 24,
+  },
+  // center and constrain width on web (desktop)
+  webContainer: {
+    alignSelf: "center",
+    width: "70%",
+    maxWidth: 920,
+  },
   headerContainer: {
     paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 24) + 6 : 36,
     paddingBottom: 10,

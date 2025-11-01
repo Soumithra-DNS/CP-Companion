@@ -2,6 +2,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
+  Dimensions,
   LayoutAnimation,
   Platform,
   ScrollView,
@@ -12,6 +13,9 @@ import {
   UIManager,
   View,
 } from "react-native";
+
+const IS_WEB = Platform.OS === "web";
+const WINDOW = Dimensions.get("window");
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -65,42 +69,28 @@ type CategoryCardProps = {
 const CategoryCard = React.memo(({ categoryTitle, algorithms, isExpanded, onHeaderPress, onAlgoPress }: CategoryCardProps) => {
   return (
     <View style={styles.card}>
-      <TouchableOpacity 
-        style={[
-          styles.cardHeader, 
-          isExpanded && styles.cardHeaderExpanded
-        ]} 
-        onPress={onHeaderPress} 
+      <TouchableOpacity
+        style={[styles.cardHeader, isExpanded && styles.cardHeaderExpanded]}
+        onPress={onHeaderPress}
         activeOpacity={0.7}
       >
         <View style={styles.cardTitleContainer}>
           <View style={styles.iconContainer}>
-            <MaterialIcons 
-              name={getIconForCategory(categoryTitle) as any} 
-              size={22} 
-              color={COLORS.secondary} 
-            />
+            <MaterialIcons name={getIconForCategory(categoryTitle) as any} size={22} color={COLORS.secondary} />
           </View>
           <Text style={styles.cardTitle}>{categoryTitle}</Text>
         </View>
         <View style={styles.expandIconContainer}>
-          <MaterialIcons 
-            name={isExpanded ? "expand-less" : "expand-more"} 
-            size={26} 
-            color={COLORS.secondary} 
-          />
+          <MaterialIcons name={isExpanded ? "expand-less" : "expand-more"} size={26} color={COLORS.secondary} />
         </View>
       </TouchableOpacity>
 
       {isExpanded && (
         <View style={styles.algoList}>
           {algorithms.map((algo, index) => (
-            <TouchableOpacity 
-              key={algo} 
-              style={[
-                styles.algoButton,
-                index === algorithms.length - 1 && styles.lastAlgoButton
-              ]} 
+            <TouchableOpacity
+              key={algo}
+              style={[styles.algoButton, index === algorithms.length - 1 && styles.lastAlgoButton]}
               onPress={() => onAlgoPress(algo)}
               activeOpacity={0.6}
             >
@@ -108,12 +98,7 @@ const CategoryCard = React.memo(({ categoryTitle, algorithms, isExpanded, onHead
                 <View style={styles.algoBullet} />
                 <Text style={styles.algoText}>{algo}</Text>
               </View>
-              <MaterialIcons 
-                name="chevron-right" 
-                size={20} 
-                color={COLORS.secondary} 
-                style={styles.chevron} 
-              />
+              <MaterialIcons name="chevron-right" size={20} color={COLORS.secondary} style={styles.chevron} />
             </TouchableOpacity>
           ))}
         </View>
@@ -138,8 +123,9 @@ export default function ResourcesPage() {
   return (
     <View style={styles.page}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-      
-      <View style={styles.container}>
+
+      {/* center container on web (matches ProgressPage layout) */}
+      <View style={[styles.container, IS_WEB && styles.webContainer]}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <Text style={styles.pageTitle}>
@@ -149,10 +135,7 @@ export default function ResourcesPage() {
           </View>
         </View>
 
-        <ScrollView 
-          showsVerticalScrollIndicator={false} 
-          contentContainerStyle={styles.listContainer}
-        >
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContainer}>
           {Object.entries(categories).map(([categoryTitle, algorithms]) => (
             <CategoryCard
               key={categoryTitle}
@@ -163,7 +146,7 @@ export default function ResourcesPage() {
               onAlgoPress={handleAlgoPress}
             />
           ))}
-          
+
           <View style={styles.bottomSpacing} />
         </ScrollView>
       </View>
@@ -176,10 +159,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  // base container used on mobile and small screens
   container: {
     flex: 1,
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight || 40 : 60,
-    paddingHorizontal: 24,
+    paddingHorizontal: 18,
+  },
+  // center and constrain width on web (desktop)
+  webContainer: {
+    alignSelf: "center",
+    width: "80%",
+    maxWidth: 920,
   },
   header: {
     marginBottom: 30,
@@ -200,7 +190,6 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   pageTitleAccent: {
-    // kept to allow explicit accent usage elsewhere
     fontSize: 30,
     fontWeight: "800",
     color: COLORS.secondary,
@@ -219,6 +208,8 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingBottom: 40,
+    // ensure content doesn't stretch edge-to-edge on very wide web layouts
+    paddingHorizontal: IS_WEB ? 0 : 0,
   },
   card: {
     backgroundColor: COLORS.cardBg,
@@ -232,6 +223,9 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: "rgba(192, 181, 181, 1)",
+    // make sure each card fills the centered container width
+    alignSelf: "stretch",
+    width: "100%",
   },
   cardHeader: {
     flexDirection: "row",
@@ -266,6 +260,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: COLORS.textDark,
     flex: 1,
+    flexWrap: "wrap",
   },
   expandIconContainer: {
     width: 36,
@@ -307,6 +302,7 @@ const styles = StyleSheet.create({
     color: COLORS.algoTextLight,
     flex: 1,
     fontWeight: "500",
+    flexWrap: "wrap",
   },
   chevron: {
     opacity: 0.7,

@@ -7,6 +7,7 @@ import {
   Dimensions,
   Easing,
   Linking,
+  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -135,9 +136,18 @@ export default function ProblemListScreen() {
 }
 
 const styles = StyleSheet.create({
+  // base container used on mobile and small screens
   container: {
     flex: 1,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight || 40 : 60,
+    paddingHorizontal: 24,
     backgroundColor: COLORS.background,
+  },
+  // center and constrain width on web (desktop)
+  webContainer: {
+    alignSelf: "center",
+    width: "70%",
+    maxWidth: 920,
   },
   scrollContainer: {
     paddingHorizontal: 20,

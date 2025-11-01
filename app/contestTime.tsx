@@ -296,61 +296,63 @@ export default function ContestTimeScreen(): React.JSX.Element {
     <View style={styles.page}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
-      {/* Fixed header (matches resources design) */}
-      <View style={styles.header}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.pageTitle}>
-            Contest{" "}
-            <Text style={styles.pageTitleAccent}>Schedule</Text>
-          </Text>
+      {/* Centered container (mobile uses same padding; web becomes constrained & centered) */}
+      <View style={[styles.container, Platform.OS === "web" && styles.webContainer]}>
+        {/* Fixed header (matches resources design) */}
+        <View style={styles.header}>
+          <View style={styles.titleContainer}>
+            <Text style={styles.pageTitle}>
+              Contest <Text style={styles.pageTitleAccent}>Schedule</Text>
+            </Text>
+          </View>
         </View>
+
+        {/* Scrollable content */}
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchContests} tintColor={COLORS.primary} colors={[COLORS.primary]} />}
+        >
+          {error ? (
+            <View style={styles.errorBanner}>
+              <MaterialIcons name="error" size={18} color={COLORS.white} />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionHeaderText}>Live Contests</Text>
+              <View style={styles.sectionCountBadge}>
+                <Text style={styles.sectionCountText}>{liveContests.length}</Text>
+              </View>
+            </View>
+            <View style={styles.sectionBody}>{liveContests.length ? liveContests.map(renderContestCard) : <Text style={styles.emptyText}>No live contests</Text>}</View>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionHeaderText}>Upcoming Contests</Text>
+              <View style={styles.sectionCountBadge}>
+                <Text style={styles.sectionCountText}>{upcomingContests.length}</Text>
+              </View>
+            </View>
+            <View style={styles.sectionBody}>{upcomingContests.length ? upcomingContests.map(renderContestCard) : <Text style={styles.emptyText}>No upcoming contests</Text>}</View>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionHeaderText}>Past Contests</Text>
+              <View style={styles.sectionCountBadge}>
+                <Text style={styles.sectionCountText}>{pastContests.length}</Text>
+              </View>
+            </View>
+            <View style={styles.sectionBody}>{pastContests.length ? pastContests.map(renderContestCard) : <Text style={styles.emptyText}>No past contests</Text>}</View>
+          </View>
+
+          <View style={{ height: 28 }} />
+        </ScrollView>
       </View>
-
-      {/* Scrollable content */}
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchContests} tintColor={COLORS.primary} colors={[COLORS.primary]} />}
-      >
-        {error ? (
-          <View style={styles.errorBanner}>
-            <MaterialIcons name="error" size={18} color={COLORS.white} />
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        ) : null}
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionHeaderText}>Live Contests</Text>
-            <View style={styles.sectionCountBadge}>
-              <Text style={styles.sectionCountText}>{liveContests.length}</Text>
-            </View>
-          </View>
-          <View style={styles.sectionBody}>{liveContests.length ? liveContests.map(renderContestCard) : <Text style={styles.emptyText}>No live contests</Text>}</View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionHeaderText}>Upcoming Contests</Text>
-            <View style={styles.sectionCountBadge}>
-              <Text style={styles.sectionCountText}>{upcomingContests.length}</Text>
-            </View>
-          </View>
-          <View style={styles.sectionBody}>{upcomingContests.length ? upcomingContests.map(renderContestCard) : <Text style={styles.emptyText}>No upcoming contests</Text>}</View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionHeaderText}>Past Contests</Text>
-            <View style={styles.sectionCountBadge}>
-              <Text style={styles.sectionCountText}>{pastContests.length}</Text>
-            </View>
-          </View>
-          <View style={styles.sectionBody}>{pastContests.length ? pastContests.map(renderContestCard) : <Text style={styles.emptyText}>No past contests</Text>}</View>
-        </View>
-
-        <View style={{ height: 28 }} />
-      </ScrollView>
     </View>
   );
 }
@@ -360,15 +362,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  // base container used on mobile and small screens
+  container: {
+    flex: 1,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight || 40 : 0,
+    paddingHorizontal: 1,
+  },
+  // center and constrain width on web (desktop)
+  webContainer: {
+    alignSelf: "center",
+    width: "80%",
+    maxWidth: 920,
+  },
   loadingText: {
     marginTop: 12,
     color: COLORS.primary,
     fontSize: 14,
   },
   header: {
-    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 24) + 6 : 50,
-    paddingHorizontal: 24,
-    paddingBottom: 16,
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 24) + 1 : 40,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
+    alignItems: "center",
+    top: -25,
   },
   titleContainer: {
     justifyContent: "center",
@@ -386,7 +402,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 14,
   },
   scrollContent: {
     paddingTop: 8,
