@@ -35,7 +35,7 @@ const COLORS = {
   shadow: "rgba(23,49,62,0.12)",
 };
 
-type PlatformKey = "codeforces" | "codechef" | "leetcode";
+type PlatformKey = "codeforces" | "atcoder" | "leetcode";
 
 interface PlatformData {
   color: string;
@@ -71,13 +71,14 @@ const PLATFORM_DATA: Record<PlatformKey, PlatformData> = {
     enabled: true,
     gradient: ["#FF5722", "#E64A19"],
   },
-  codechef: {
-    color: "#4CAF50",
-    icon: "restaurant",
-    platformName: "CodeChef",
-    api: "https://www.codechef.com/api/list/contests/all",
+  // replaced CodeChef with AtCoder (uses kenkoooo cached JSON)
+  atcoder: {
+    color: "#6A1B9A",
+    icon: "schedule",
+    platformName: "AtCoder",
+    api: "https://kenkoooo.com/atcoder/resources/contests.json",
     enabled: true,
-    gradient: ["#4CAF50", "#388E3C"],
+    gradient: ["#6A1B9A", "#8E24AA"],
   },
   leetcode: {
     color: "#FFA500",
@@ -92,7 +93,7 @@ const PLATFORM_DATA: Record<PlatformKey, PlatformData> = {
         duration
       }
     }`,
-    enabled: false, // disabled by default to avoid GraphQL setup
+    enabled: true,
     gradient: ["#FFA500", "#F57C00"],
   },
 };
@@ -105,6 +106,11 @@ export default function ContestTimeScreen(): React.JSX.Element {
   const [currentTime, setCurrentTime] = useState(new Date());
   const fadeAnim = useState(new Animated.Value(0))[0];
   const scaleAnim = useState(new Animated.Value(0.98))[0];
+  
+  // State for "Show More" functionality
+  const [visibleLiveCount, setVisibleLiveCount] = useState(10);
+  const [visibleUpcomingCount, setVisibleUpcomingCount] = useState(10);
+  const [visiblePastCount, setVisiblePastCount] = useState(10);
 
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -120,68 +126,137 @@ export default function ContestTimeScreen(): React.JSX.Element {
     }
   }, [loading]);
 
+  /* helper: validate contest object before adding to list */
+  const isValidContest = (c: Partial<Contest> | any): c is Contest => {
+    if (!c) return false;
+    if (!c.name || typeof c.name !== "string") return false;
+    if (!c.url || typeof c.url !== "string") return false;
+
+    const s = c.startTime instanceof Date ? c.startTime : new Date(c.startTime);
+    const e = c.endTime instanceof Date ? c.endTime : new Date(c.endTime);
+    if (!(s instanceof Date) || isNaN(s.getTime())) return false;
+    if (!(e instanceof Date) || isNaN(e.getTime())) return false;
+    // end must be >= start (basic sanity)
+    if (e.getTime() < s.getTime()) return false;
+
+    return true;
+  };
+
   const fetchContests = useCallback(async () => {
     setRefreshing(true);
     setError(null);
     try {
-      const results = await Promise.all(
+      const results = await Promise.allSettled(
         Object.entries(PLATFORM_DATA)
           .filter(([, d]) => d.enabled)
           .map(async ([key, data]) => {
             try {
               if (key === "codeforces") {
                 const resp = await axios.get(data.api);
-                if (resp.data.status !== "OK") return [];
+                if (resp.data.status !== "OK" || !Array.isArray(resp.data.result)) return [];
                 return resp.data.result
-                  .filter((c: any) => c.phase === "BEFORE" || c.phase === "CODING")
-                  .map((c: any) => ({
-                    id: `codeforces-${c.id}`,
-                    platform: "codeforces" as const,
-                    name: c.name,
-                    startTime: new Date(c.startTimeSeconds * 1000),
-                    endTime: new Date((c.startTimeSeconds + c.durationSeconds) * 1000),
-                    url: `https://codeforces.com/contests/${c.id}`,
-                    color: data.color,
-                    icon: data.icon,
-                    platformName: data.platformName,
-                    gradient: data.gradient,
-                  }));
-              }
-              if (key === "codechef") {
-                const resp = await axios.get(data.api);
-                const arr: Contest[] = [];
-                const pushIf = (list: any[]) =>
-                  list?.forEach((c: any) =>
-                    arr.push({
-                      id: `codechef-${c.contest_code}-${Math.random()}`,
-                      platform: "codechef" as const,
-                      name: c.contest_name,
-                      startTime: new Date(c.contest_start_date),
-                      endTime: new Date(c.contest_end_date),
-                      url: `https://www.codechef.com/${c.contest_code}`,
+                  .map((c: any) => {
+                    const start = Number(c.startTimeSeconds);
+                    const dur = Number(c.durationSeconds);
+                    const contest: Partial<Contest> = {
+                      id: `codeforces-${c.id}`,
+                      platform: "codeforces",
+                      name: c.name,
+                      startTime: isFinite(start) ? new Date(start * 1000) : undefined,
+                      endTime: isFinite(start) && isFinite(dur) ? new Date((start + dur) * 1000) : undefined,
+                      url: c.id ? `https://codeforces.com/contests/${c.id}` : undefined,
                       color: data.color,
                       icon: data.icon,
                       platformName: data.platformName,
                       gradient: data.gradient,
-                    })
-                  );
-                pushIf(resp.data.present_contests);
-                pushIf(resp.data.future_contests);
+                    };
+                    return isValidContest(contest) ? (contest as Contest) : null;
+                  })
+                  .filter(Boolean) as Contest[];
+              }
+
+              if (key === "atcoder") {
+                // kenkoooo's contests.json is a reliable aggregate for AtCoder contests
+                const resp = await axios.get(data.api);
+                if (!Array.isArray(resp.data)) return [];
+                const arr: Contest[] = [];
+                resp.data.forEach((c: any) => {
+                  const id = c.id || c.contest_id || c.ContestId || null;
+                  const start = Number(c.start_epoch_second ?? c.startEpochSecond ?? c.start_time ?? NaN);
+                  const dur = Number(c.duration_second ?? c.duration ?? NaN);
+                  const contest: Partial<Contest> = {
+                    id: id ? `atcoder-${id}` : `atcoder-${Math.random()}`,
+                    platform: "atcoder",
+                    name: c.title || c.name || id || "AtCoder Contest",
+                    startTime: isFinite(start) ? new Date(start * 1000) : undefined,
+                    endTime: isFinite(start) && isFinite(dur) ? new Date((start + dur) * 1000) : undefined,
+                    url: id ? `https://atcoder.jp/contests/${id}` : undefined,
+                    color: data.color,
+                    icon: data.icon,
+                    platformName: data.platformName,
+                    gradient: data.gradient,
+                  };
+                  if (isValidContest(contest)) arr.push(contest as Contest);
+                });
                 return arr;
               }
-              // leetcode disabled for safety
+
+              if (key === "leetcode") {
+                try {
+                  const resp = await axios.post(data.api, { query: data.query }, { headers: { "Content-Type": "application/json" } });
+                  if (resp.data.data?.allContests) {
+                    return resp.data.data.allContests
+                      .map((c: any) => {
+                        const start = Number(c.startTime);
+                        const dur = Number(c.duration);
+                        const contest: Partial<Contest> = {
+                          id: c.titleSlug ? `leetcode-${c.titleSlug}-${Date.now()}` : `leetcode-${Math.random()}`,
+                          platform: "leetcode",
+                          name: c.title,
+                          startTime: isFinite(start) ? new Date(start * 1000) : undefined,
+                          endTime: isFinite(start) && isFinite(dur) ? new Date((start + dur) * 1000) : undefined,
+                          url: c.titleSlug ? `https://leetcode.com/contest/${c.titleSlug}` : undefined,
+                          color: data.color,
+                          icon: data.icon,
+                          platformName: data.platformName,
+                          gradient: data.gradient,
+                        };
+                        return isValidContest(contest) ? (contest as Contest) : null;
+                      })
+                      .filter(Boolean) as Contest[];
+                  }
+                } catch (leetcodeError) {
+                  // ignore leetcode failures silently
+                }
+                return [];
+              }
+
               return [];
             } catch (e) {
-              console.error("platform fetch error", e);
+              console.error(`Platform ${key} fetch error:`, e);
               return [];
             }
           })
       );
-      const merged = results.flat().sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+
+      const successfulResults = results
+        .filter((r): r is PromiseFulfilledResult<Contest[]> => r.status === "fulfilled")
+        .map(r => r.value)
+        .flat();
+
+      // dedupe by url + name + startTime
+      const seen = new Map<string, Contest>();
+      successfulResults.forEach((c) => {
+        if (!isValidContest(c)) return;
+        const key = `${c.url}::${c.name}::${c.startTime.getTime()}`;
+        if (!seen.has(key)) seen.set(key, c);
+      });
+
+      const merged = Array.from(seen.values()).sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
       setContests(merged);
     } catch (e) {
       setError("Failed to fetch contests");
-      console.error(e);
+      console.error("Overall fetch error:", e);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -192,7 +267,14 @@ export default function ContestTimeScreen(): React.JSX.Element {
     fetchContests();
   }, [fetchContests]);
 
-  const formatDate = useCallback((d: Date) => d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }), []);
+  const formatDate = useCallback((d: Date) => 
+    d.toLocaleString("en-US", { 
+      month: "short", 
+      day: "numeric", 
+      hour: "2-digit", 
+      minute: "2-digit", 
+      hour12: true 
+    }), []);
 
   const calculateTimeRemaining = useCallback((t: Date) => {
     const diff = t.getTime() - Date.now();
@@ -212,29 +294,76 @@ export default function ContestTimeScreen(): React.JSX.Element {
     return "completed";
   }, []);
 
-  const openContest = useCallback((url: string) => Linking.openURL(url).catch((e) => console.error(e)), []);
+  const openContest = useCallback((url: string) => 
+    Linking.openURL(url).catch((e) => console.error("Failed to open URL:", e)), []);
 
   const { liveContests, upcomingContests, pastContests } = useMemo(() => {
     const now = Date.now();
     const live: Contest[] = [];
     const upcoming: Contest[] = [];
     const past: Contest[] = [];
+    
     contests.forEach((c) => {
-      if (c.startTime.getTime() > now) upcoming.push(c);
-      else if (c.endTime.getTime() > now) live.push(c);
-      else past.push(c);
+      if (c.startTime.getTime() > now) {
+        upcoming.push(c);
+      } else if (c.endTime.getTime() > now) {
+        live.push(c);
+      } else {
+        past.push(c);
+      }
     });
-    return { liveContests: live, upcomingContests: upcoming, pastContests: past.slice(-10).reverse() };
+    
+    return { 
+      liveContests: live, 
+      upcomingContests: upcoming, 
+      pastContests: past.reverse() 
+    };
   }, [contests]);
+
+  // Reset visible counts when contests change
+  useEffect(() => {
+    setVisibleLiveCount(10);
+    setVisibleUpcomingCount(10);
+    setVisiblePastCount(10);
+  }, [contests]);
+
+  // Show more functionality
+  const showMoreLive = useCallback(() => {
+    setVisibleLiveCount(prev => prev + 5);
+  }, []);
+
+  const showMoreUpcoming = useCallback(() => {
+    setVisibleUpcomingCount(prev => prev + 5);
+  }, []);
+
+  const showMorePast = useCallback(() => {
+    setVisiblePastCount(prev => prev + 5);
+  }, []);
 
   const renderContestCard = (contest: Contest, idx: number) => {
     const status = getStatus(contest.startTime, contest.endTime);
     const isLive = status === "live";
     const isUpcoming = status === "upcoming";
+    
     return (
-      <Animated.View key={contest.id} style={[styles.contestCard, idx !== 0 && { marginTop: 12 }, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-        <TouchableOpacity onPress={() => openContest(contest.url)} activeOpacity={0.85}>
-          <LinearGradient colors={contest.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cardGradient}>
+      <Animated.View 
+        key={contest.id} 
+        style={[
+          styles.contestCard, 
+          idx !== 0 && { marginTop: 12 }, 
+          { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
+        ]}
+      >
+        <TouchableOpacity 
+          onPress={() => openContest(contest.url)} 
+          activeOpacity={0.85}
+        >
+          <LinearGradient 
+            colors={contest.gradient} 
+            start={{ x: 0, y: 0 }} 
+            end={{ x: 1, y: 0 }} 
+            style={styles.cardGradient}
+          >
             <View style={styles.cardContent}>
               <View style={styles.cardHeader}>
                 <View style={styles.platformInfo}>
@@ -243,8 +372,14 @@ export default function ContestTimeScreen(): React.JSX.Element {
                   </View>
                   <Text style={styles.platform}>{contest.platformName}</Text>
                 </View>
-                <View style={[styles.statusBadge, isLive && { backgroundColor: COLORS.live }, isUpcoming && { backgroundColor: COLORS.upcoming }]}>
-                  <Text style={styles.statusText}>{isLive ? "LIVE" : isUpcoming ? "UPCOMING" : "COMPLETED"}</Text>
+                <View style={[
+                  styles.statusBadge, 
+                  isLive && { backgroundColor: COLORS.live }, 
+                  isUpcoming && { backgroundColor: COLORS.upcoming }
+                ]}>
+                  <Text style={styles.statusText}>
+                    {isLive ? "LIVE" : isUpcoming ? "UPCOMING" : "COMPLETED"}
+                  </Text>
                 </View>
               </View>
 
@@ -269,7 +404,9 @@ export default function ContestTimeScreen(): React.JSX.Element {
               <View style={styles.cardFooter}>
                 <View style={styles.durationContainer}>
                   <MaterialIcons name="hourglass-bottom" size={14} color={COLORS.primary} />
-                  <Text style={styles.durationText}>{Math.max(0, Math.round((contest.endTime.getTime() - contest.startTime.getTime()) / (1000 * 60))) + "m"}</Text>
+                  <Text style={styles.durationText}>
+                    {Math.max(0, Math.round((contest.endTime.getTime() - contest.startTime.getTime()) / (1000 * 60))) + "m"}
+                  </Text>
                 </View>
                 <View style={styles.launchButton}>
                   <MaterialIcons name="launch" size={16} color={contest.color} />
@@ -279,6 +416,17 @@ export default function ContestTimeScreen(): React.JSX.Element {
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
+    );
+  };
+
+  const renderShowMoreButton = (onPress: () => void, show: boolean) => {
+    if (!show) return null;
+    
+    return (
+      <TouchableOpacity onPress={onPress} style={styles.showMoreButton}>
+        <Text style={styles.showMoreText}>Show More</Text>
+        <MaterialIcons name="expand-more" size={16} color={COLORS.primary} />
+      </TouchableOpacity>
     );
   };
 
@@ -292,13 +440,19 @@ export default function ContestTimeScreen(): React.JSX.Element {
     );
   }
 
+  const visibleLive = liveContests.slice(0, visibleLiveCount);
+  const visibleUpcoming = upcomingContests.slice(0, visibleUpcomingCount);
+  const visiblePast = pastContests.slice(0, visiblePastCount);
+
+  const hasMoreLive = liveContests.length > visibleLiveCount;
+  const hasMoreUpcoming = upcomingContests.length > visibleUpcomingCount;
+  const hasMorePast = pastContests.length > visiblePastCount;
+
   return (
     <View style={styles.page}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
-      {/* Centered container (mobile uses same padding; web becomes constrained & centered) */}
       <View style={[styles.container, Platform.OS === "web" && styles.webContainer]}>
-        {/* Fixed header (matches resources design) */}
         <View style={styles.header}>
           <View style={styles.titleContainer}>
             <Text style={styles.pageTitle}>
@@ -307,11 +461,25 @@ export default function ContestTimeScreen(): React.JSX.Element {
           </View>
         </View>
 
-        {/* Scrollable content */}
         <ScrollView
-          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          style={[
+            styles.content,
+            Platform.OS === "web" ? ({ 
+              scrollbarWidth: "none", 
+              msOverflowStyle: "none" 
+            } as any) : {},
+          ]}
           contentContainerStyle={styles.scrollContent}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchContests} tintColor={COLORS.primary} colors={[COLORS.primary]} />}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={fetchContests} 
+              tintColor={COLORS.primary} 
+              colors={[COLORS.primary]} 
+            />
+          }
         >
           {error ? (
             <View style={styles.errorBanner}>
@@ -320,6 +488,7 @@ export default function ContestTimeScreen(): React.JSX.Element {
             </View>
           ) : null}
 
+          {/* Live Contests Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionHeaderText}>Live Contests</Text>
@@ -327,9 +496,16 @@ export default function ContestTimeScreen(): React.JSX.Element {
                 <Text style={styles.sectionCountText}>{liveContests.length}</Text>
               </View>
             </View>
-            <View style={styles.sectionBody}>{liveContests.length ? liveContests.map(renderContestCard) : <Text style={styles.emptyText}>No live contests</Text>}</View>
+            <View style={styles.sectionBody}>
+              {visibleLive.length ? 
+                visibleLive.map(renderContestCard) : 
+                <Text style={styles.emptyText}>No live contests</Text>
+              }
+              {renderShowMoreButton(showMoreLive, hasMoreLive)}
+            </View>
           </View>
 
+          {/* Upcoming Contests Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionHeaderText}>Upcoming Contests</Text>
@@ -337,9 +513,16 @@ export default function ContestTimeScreen(): React.JSX.Element {
                 <Text style={styles.sectionCountText}>{upcomingContests.length}</Text>
               </View>
             </View>
-            <View style={styles.sectionBody}>{upcomingContests.length ? upcomingContests.map(renderContestCard) : <Text style={styles.emptyText}>No upcoming contests</Text>}</View>
+            <View style={styles.sectionBody}>
+              {visibleUpcoming.length ? 
+                visibleUpcoming.map(renderContestCard) : 
+                <Text style={styles.emptyText}>No upcoming contests</Text>
+              }
+              {renderShowMoreButton(showMoreUpcoming, hasMoreUpcoming)}
+            </View>
           </View>
 
+          {/* Past Contests Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionHeaderText}>Past Contests</Text>
@@ -347,7 +530,13 @@ export default function ContestTimeScreen(): React.JSX.Element {
                 <Text style={styles.sectionCountText}>{pastContests.length}</Text>
               </View>
             </View>
-            <View style={styles.sectionBody}>{pastContests.length ? pastContests.map(renderContestCard) : <Text style={styles.emptyText}>No past contests</Text>}</View>
+            <View style={styles.sectionBody}>
+              {visiblePast.length ? 
+                visiblePast.map(renderContestCard) : 
+                <Text style={styles.emptyText}>No past contests</Text>
+              }
+              {renderShowMoreButton(showMorePast, hasMorePast)}
+            </View>
           </View>
 
           <View style={{ height: 28 }} />
@@ -362,13 +551,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  // base container used on mobile and small screens
   container: {
     flex: 1,
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight || 40 : 0,
     paddingHorizontal: 1,
   },
-  // center and constrain width on web (desktop)
   webContainer: {
     alignSelf: "center",
     width: "80%",
@@ -419,6 +606,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: COLORS.white,
     marginLeft: 8,
+    fontSize: 14,
   },
   section: {
     marginBottom: 18,
@@ -454,6 +642,7 @@ const styles = StyleSheet.create({
     color: COLORS.secondary,
     padding: 16,
     textAlign: "center",
+    fontSize: 14,
   },
   contestCard: {
     borderRadius: 14,
@@ -517,6 +706,7 @@ const styles = StyleSheet.create({
   timeText: {
     color: COLORS.primary,
     marginLeft: 8,
+    fontSize: 13,
   },
   cardFooter: {
     flexDirection: "row",
@@ -530,10 +720,26 @@ const styles = StyleSheet.create({
   durationText: {
     marginLeft: 6,
     color: COLORS.primary,
+    fontSize: 13,
   },
   launchButton: {
     backgroundColor: "rgba(255,255,255,0.9)",
     padding: 6,
     borderRadius: 18,
+  },
+  showMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    marginTop: 8,
+    backgroundColor: 'rgba(23,49,62,0.08)',
+    borderRadius: 8,
+  },
+  showMoreText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 4,
   },
 });

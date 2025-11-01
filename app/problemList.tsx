@@ -156,8 +156,8 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    paddingTop: 48,
-    paddingBottom: 12,
+    paddingTop: 4,
+    paddingBottom: 10,
     paddingHorizontal: 20,
   },
   headerRow: {
