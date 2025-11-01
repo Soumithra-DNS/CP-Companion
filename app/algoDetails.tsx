@@ -1,291 +1,473 @@
-const algoDetails = {
+type AlgoDetail = {
+  description: string;
+  videoId?: string;
+  problemLink?: string;
+};
+
+const algoDetails: Record<string, AlgoDetail> = {
   "Bubble Sort": {
-    description: 
-    `Bubble Sort repeatedly swaps adjacent elements if they are in the wrong order. 
+    description: `Repeatedly step through the list, compare adjacent elements and swap them if they are in the wrong order. After each full pass the largest remaining element is placed at the end.
 
-Algorithm:
-------------
-bubbleSort(array) 
-    for i <- 1 to sizeOfArray - 1 
-        for j <- 1 to sizeOfArray - 1 - i 
-            if leftElement > rightElement 
-                swap leftElement and rightElement 
-    end bubbleSort.
+Algorithm (Pseudocode):
+function bubbleSort(arr):
+  n = length(arr)
+  for i = 0 to n-2:
+    swapped = false
+    // Last i elements are already in place
+    for j = 0 to n-2-i:
+      if arr[j] > arr[j+1]:
+        swap(arr[j], arr[j+1])
+        swapped = true
+    // If no two elements were swapped
+    // in inner loop, then array is sorted
+    if not swapped:
+      break
 
-Time Complexity: O(n^2).`,
+Time complexity: O(n^2) worst/average, O(n) best (with optimization)
+Space complexity: O(1)`,
     videoId: "nmhjrI-aW5o",
     problemLink: "https://codeforces.com/problemset/problem/339/A",
   },
+
   "Selection Sort": {
-    description: `Selection Sort finds the minimum element and places it at the beginning. 
+    description: `Find the minimum element from the unsorted portion and move it to the front. Fewer swaps than bubble sort but still O(n^2).
 
-Algorithm:
-------------
-selectionSort(array, size)
-    for i from 0 to size - 1 do
-        set i as the index of the current minimum
-        for j from i + 1 to size - 1 do
-        if array[j] < array[current minimum]
-            set j as the new current minimum index
-        if current minimum is not i
-        swap array[i] with array[current minimum]
-    end selectionSort
+Algorithm (Pseudocode):
+function selectionSort(arr):
+  n = length(arr)
+  for i = 0 to n-2:
+    // Find the minimum element in unsorted array
+    minIndex = i
+    for j = i+1 to n-1:
+      if arr[j] < arr[minIndex]:
+        minIndex = j
+        
+    // Swap the found minimum element with the first element
+    swap(arr[i], arr[minIndex])
 
-Time Complexity: O(n^2).`,
+Time complexity: O(n^2)
+Space complexity: O(1)`,
     videoId: "Ns4LCeeOFS4",
     problemLink: "https://leetcode.com/problems/sort-an-array/",
   },
+
   "Insertion Sort": {
-    description: `Insertion Sort builds the final sorted array one item at a time. 
+    description: `Builds a sorted portion at the front by inserting each new element into its correct position.
 
-Algorithm:
-------------
-insertionSort(array)
-    mark first element as sorted
-    for each unsorted element X
-        'extract' the element X
-        for j <- lastSortedIndex down to 0
-        if current element j > X
-            move sorted element to the right by 1
-        break loop and insert X here
-    end insertionSort
+Algorithm (Pseudocode):
+function insertionSort(arr):
+  n = length(arr)
+  for i = 1 to n-1:
+    key = arr[i]
+    j = i - 1
+    
+    // Move elements of arr[0..i-1], that are
+    // greater than key, to one position ahead
+    // of their current position
+    while j >= 0 and arr[j] > key:
+      arr[j + 1] = arr[j]
+      j = j - 1
+    arr[j + 1] = key
 
-
-Time Complexity: O(n^2).`,
+Time complexity: O(n^2) worst, O(n) best (already sorted)
+Space complexity: O(1)`,
     videoId: "OGzPmgsI-pQ",
     problemLink: "https://leetcode.com/problems/insertion-sort-list/",
   },
+
   "Linear Search": {
-    description: `Linear Search sequentially checks each element. 
+    description: `Scan elements one by one until the target is found. Simple but O(n) time.
 
-Algorithm:
--------------
-LinearSearch(array, key)
-  for each item in the array
-    if item == value
-      return its index
+Algorithm (Pseudocode):
+function linearSearch(arr, target):
+  n = length(arr)
+  for i = 0 to n-1:
+    if arr[i] == target:
+      return i  // Return index of found element
+  return -1 // Element not found
 
-Time Complexity: O(n).`,
+Time complexity: O(n)
+Space complexity: O(1)`,
     videoId: "C46QfTjVCNU",
     problemLink: "https://www.hackerearth.com/practice/algorithms/searching/linear-search/practice-problems/algorithm/find-mex-62916c25/",
   },
+
   "Binary Search": {
-    description: `Binary Search repeatedly divides the search interval in half. 
+    description: `Efficient search on a sorted array by repeatedly halving the search interval.
 
-Algorithm:
-------------
-while low <= high
-    mid = (low + high)/2
-    if (x == arr[mid])
-        return mid
-    else if (x > arr[mid]) // x is on the right side
-        low = mid + 1
-    else                       // x is on the left side
-        high = mid - 1
+Algorithm (Iterative Pseudocode):
+function binarySearch(sortedArr, target):
+  low = 0
+  high = length(sortedArr) - 1
+  
+  while low <= high:
+    mid = floor((low + high) / 2)
+    
+    if sortedArr[mid] == target:
+      return mid // Found
+    else if sortedArr[mid] < target:
+      low = mid + 1
+    else: // sortedArr[mid] > target
+      high = mid - 1
+      
+  return -1 // Not found
 
-Time Complexity: O(log n).`,
+Time complexity: O(log n)
+Space complexity: O(1)`,
     videoId: "P3YID7liBug",
     problemLink: "https://leetcode.com/problems/binary-search/",
   },
+
   "Ternary Search": {
-    description: `Ternary Search divides the array into three parts and reduces the search space. 
+    description: `Divide the search interval into three parts and determine which segment contains the target. Useful for finding the maximum or minimum of a unimodal function.
 
-Algorithm:
-------------
-ternarySearch(array, start, end, key)
-Begin
-   if start <= end then
-      midFirst := start + (end - start) /3
-      midSecond := midFirst + (end - start) / 3
-      if array[midFirst] = key then
-         return midFirst
-      if array[midSecond] = key then
-         return midSecond
-      if key < array[midFirst] then
-         call ternarySearch(array, start, midFirst-1, key)
-      if key > array[midSecond] then
-         call ternarySearch(array, midFirst+1, end, key)
-      else
-         call ternarySearch(array, midFirst+1, midSecond-1, key)
-   else
-      return invalid location
-End
+Algorithm (Pseudocode for finding max of unimodal function):
+function ternarySearch(f, low, high):
+  // f is the unimodal function
+  // We are searching in the integer range [low, high]
+  
+  while (high - low) > 2: // Or a small epsilon for real numbers
+    m1 = low + floor((high - low) / 3)
+    m2 = high - floor((high - low) / 3)
+    
+    if f(m1) < f(m2):
+      low = m1 // The max is in [m1, high]
+    else:
+      high = m2 // The max is in [low, m2]
+      
+  // Post-processing: check the remaining small range [low, high]
+  maxVal = f(low)
+  maxIndex = low
+  for i = low+1 to high:
+    if f(i) > maxVal:
+      maxVal = f(i)
+      maxIndex = i
+  return maxIndex
 
-Time Complexity: O(log n).`,
+Time complexity: O(log n)
+Space complexity: O(1)`,
     videoId: "WyWL1PBNvb8",
     problemLink: "https://codeforces.com/problemset/problem/378/A",
   },
-  "Depth First Search (DFS)": {
-    description: `DFS explores as far as possible along each branch before backtracking.
 
-Algorithm:
-------------
-DFS(G, u)
-    u.visited = true
-    for each v ∈ G.Adj[u]
-        if v.visited == false
-            DFS(G,v)
-     
-init() {
-    For each u ∈ G
-        u.visited = false
-     For each u ∈ G
-       DFS(G, u)
-}
-`,
+  "Depth First Search (DFS)": {
+    description: `Explore as far as possible along each branch before backtracking. Useful for connectivity, topological sort, and many graph problems.
+
+Algorithm (Recursive Pseudocode):
+// Global or persistent 'visited' set/array
+visited = new Set()
+
+function DFS(graph, startNode):
+  // Wrapper function to start the search
+  _DFS_recursive(graph, startNode)
+
+function _DFS_recursive(graph, u):
+  visited.add(u)
+  // Process node u (e.g., add to a list)
+  
+  for each neighbor v of u in graph:
+    if not visited.has(v):
+      _DFS_recursive(graph, v)
+
+Time complexity: O(V + E)
+Space complexity: O(V) (recursion stack)`,
     videoId: "Qzf1a--rhp8",
     problemLink: "https://leetcode.com/problems/number-of-islands/",
   },
-  "Breadth First Search (BFS)": {
-    description: `BFS explores all neighbors at the present depth before moving on to nodes at the next depth.
 
-Algorithm:
-------------
-create a queue Q 
-mark v as visited and put v into Q 
-while Q is non-empty 
-    remove the head u of Q 
-    mark and enqueue all (unvisited) neighbours of u
-`,
+  "Breadth First Search (BFS)": {
+    description: `Explore neighbors level by level using a queue. Useful for shortest path on unweighted graphs and layering.
+
+Algorithm (Pseudocode):
+function BFS(graph, startNode):
+  queue = new Queue()
+  visited = new Set()
+  
+  queue.enqueue(startNode)
+  visited.add(startNode)
+  
+  while queue is not empty:
+    u = queue.dequeue()
+    // Process node u
+    
+    for each neighbor v of u in graph:
+      if not visited.has(v):
+        visited.add(v)
+        queue.enqueue(v)
+
+Time complexity: O(V + E)
+Space complexity: O(V)`,
     videoId: "oDqjPvD54Ss",
     problemLink: "https://leetcode.com/problems/word-ladder/",
   },
-  "Dijkstra’s Algorithm": {
-    description: `Dijkstra’s algorithm finds the shortest path in a weighted graph with non-negative edges.
 
-Algorithm:
-------------
-function dijkstra(G, S)
-    for each vertex V in G
-        distance[V] <- infinite
-        previous[V] <- NULL
-        If V != S, add V to Priority Queue Q
-    distance[S] <- 0
-	
-    while Q IS NOT EMPTY
-        U <- Extract MIN from Q
-        for each unvisited neighbour V of U
-            tempDistance <- distance[U] + edge_weight(U, V)
-            if tempDistance < distance[V]
-                distance[V] <- tempDistance
-                previous[V] <- U
-    return distance[], previous[]
-`,
+  "Dijkstra's Algorithm": {
+    description: `Finds shortest paths from a source to all vertices in a graph with non-negative edge weights using a priority queue.
+
+Algorithm (Pseudocode):
+function Dijkstra(graph, source):
+  // 1. Initialization
+  dist = new Map() // Stores shortest distance from source
+  pq = new PriorityQueue() // Min-priority queue (stores [distance, vertex])
+
+  for each vertex v in graph:
+    dist[v] = INFINITY
+  
+  dist[source] = 0
+  pq.add([0, source])
+
+  // 2. Main loop
+  while pq is not empty:
+    [d, u] = pq.extractMin() // d = distance, u = vertex
+    
+    // Optimization: if we already found a shorter path, skip
+    if d > dist[u]:
+      continue 
+    
+    // 3. Relax neighbors
+    for each neighbor v of u with edge weight w:
+      newDist = dist[u] + w
+      if newDist < dist[v]:
+        dist[v] = newDist
+        pq.add([newDist, v])
+                    
+  return dist
+
+Time complexity: O((V+E) log V) with binary heap
+Space complexity: O(V)`,
     videoId: "GazC3A4OQTE",
     problemLink: "https://leetcode.com/problems/network-delay-time/",
   },
+
   "Memoization": {
-    description: `The dynamic programming approach stores the results of the subproblems so they are not recalculated. This is called memoization (a top-down approach).
+    description: `Top-down dynamic programming: cache results of expensive function calls to avoid recomputation.
 
-Algorithm:
-------------
-Create an array (or a hash map) to store the results.
+Algorithm (Pattern using Fibonacci as example):
+// 1. Create a cache/memo
+memo = new Map()
 
-In the recursive function, before making the recursive calls, check if the result for the current input n is already in your storage. If it is, return the stored value.
+function fib(n):
+  // 2. Base cases
+  if n <= 1:
+    return n
+    
+  // 3. Check cache
+  if memo.has(n):
+    return memo.get(n)
+    
+  // 4. Compute and store
+  result = fib(n - 1) + fib(n - 2)
+  memo.set(n, result)
+  
+  // 5. Return result
+  return result
 
-If the value isn't stored, calculate it, store it, and then return it.
-`,
+Time complexity: O(n) for Fibonacci (reduces from O(2^n))
+Space complexity: O(n) (for cache and recursion stack)`,
     videoId: "ZBHKZF5w4YU",
     problemLink: "https://codeforces.com/problemset/problem/55/D",
   },
+
   "Longest Increasing Subsequence (LIS)": {
-    description: `LIS finds the longest subsequence where elements are strictly increasing.
+    description: `Finds the longest strictly increasing subsequence. Common approaches: O(n^2) DP or O(n log n) patience sorting using a tails array.
 
-Algorithm:
-------------
-The tabulation approach for finding the Longest Increasing Subsequence (LIS) solves the problem iteratively in a bottom-up manner. The idea is to maintain a 1D array lis[], where lis[i] stores the length of the longest increasing subsequence that ends at index i. Initially, each element in lis[] is set to 1, as the smallest possible subsequence for any element is the element itself.
+Algorithm (O(n^2) DP):
+function LIS_N_Squared(arr):
+  n = length(arr)
+  dp = new Array(n) initialized to 1
+  
+  for i = 1 to n-1:
+    for j = 0 to i-1:
+      if arr[i] > arr[j] and dp[i] < dp[j] + 1:
+        dp[i] = dp[j] + 1
+        
+  return max(dp)
 
-The algorithm then iterates over each element of the array. For each element arr[i], it checks all previous elements arr[0] to arr[i-1]. If arr[i] is greater than arr[prev] (ensuring the subsequence is increasing), it updates lis[i] to the maximum of its current value or lis[prev] + 1, indicating that we can extend the subsequence ending at arr[prev] by including arr[i].
+Algorithm (O(n log n) Binary Search):
+function LIS_N_Log_N(arr):
+  // 'tails' array stores the smallest tail of all increasing
+  // subsequences with length i+1
+  tails = [] 
+  
+  for num in arr:
+    // Find first element in 'tails' >= num (binary search)
+    i = binarySearch_lowerBound(tails, num) 
+    
+    if i == length(tails):
+      tails.push(num)
+    else:
+      tails[i] = num
+      
+  return length(tails)
 
-Finally, the length of the longest increasing subsequence is the maximum value in the lis[] array.
-`,
+Time complexity: O(n^2) or O(n log n)
+Space complexity: O(n)`,
     videoId: "odrfUCS9sQk",
     problemLink: "https://leetcode.com/problems/longest-increasing-subsequence/",
   },
-  "Longest Common Subsequence (LCS)": {
-    description: `LCS finds the longest subsequence common to two sequences.
 
-Algorithm:
-------------
-X and Y be two given sequences
-Initialize a table LCS of dimension X.length * Y.length
-X.label = X
-Y.label = Y
-LCS[0][] = 0
-LCS[][0] = 0
-Start from LCS[1][1]
-Compare X[i] and Y[j]
-    If X[i] = Y[j]
-        LCS[i][j] = 1 + LCS[i-1, j-1]   
-        Point an arrow to LCS[i][j]
-    Else
-        LCS[i][j] = max(LCS[i-1][j], LCS[i][j-1])
-        Point an arrow to max(LCS[i-1][j], LCS[i][j-1])
-`,
+  "Longest Common Subsequence (LCS)": {
+    description: `Find the longest subsequence present in both sequences. Classic DP builds a 2D table where dp[i][j] = LCS length for prefixes.
+
+Algorithm (Pseudocode):
+function LCS(str1, str2):
+  n = length(str1)
+  m = length(str2)
+  // dp[i][j] = LCS of str1[0..i-1] and str2[0..j-1]
+  dp = new 2D_Array(n + 1, m + 1) initialized to 0
+  
+  for i = 1 to n:
+    for j = 1 to m:
+      if str1[i - 1] == str2[j - 1]:
+        // Characters match
+        dp[i][j] = 1 + dp[i - 1][j - 1]
+      else:
+        // Characters don't match
+        dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
+        
+  return dp[n][m]
+
+Time complexity: O(n*m)
+Space complexity: O(n*m) (can be optimized to O(min(n,m)))`,
     videoId: "Ua0GhsJSlWM",
     problemLink: "https://leetcode.com/problems/longest-common-subsequence/",
   },
+
   "Rabin-Karp Algorithm": {
-    description:`Rabin-Karp uses hashing to find patterns in strings. 
+    description: `String-search algorithm using rolling hash to quickly find matching substrings.
 
-Algorithm:
-------------
-n = t.length
-m = p.length
-h = dm-1 mod q
-p = 0
-t0 = 0
-for i = 1 to m
-    p = (dp + p[i]) mod q
-    t0 = (dt0 + t[i]) mod q
-for s = 0 to n - m
-    if p = ts
-        if p[1.....m] = t[s + 1..... s + m]
-            print "pattern found at position" s
-    If s < n-m
-        ts + 1 = (d (ts - t[s + 1]h) + t[s + m + 1]) mod q
+Algorithm (Pseudocode):
+function RabinKarp(text, pattern):
+  n = length(text), m = length(pattern)
+  prime = 101 // A prime number for modulo
+  d = 256     // Number of characters in alphabet
+  h = (d ^ (m-1)) % prime // (d^(m-1)) mod prime
+  
+  patternHash = 0
+  textHash = 0
 
-Average Time Complexity: O(n+m).`,
+  // 1. Calculate initial hashes for pattern and first window of text
+  for i = 0 to m-1:
+    patternHash = (d * patternHash + pattern[i]) % prime
+    textHash = (d * textHash + text[i]) % prime
+    
+  // 2. Slide the window
+  for i = 0 to n - m:
+    // Check if hashes match
+    if patternHash == textHash:
+      // If hashes match, verify character by character
+      if text.substring(i, i + m) == pattern:
+        return i // Match found
+
+    // 3. Calculate hash for next window
+    if i < n - m:
+      // Remove leading digit, add trailing digit
+      textHash = (d * (textHash - text[i] * h) + text[i + m]) % prime
+      if textHash < 0: textHash = textHash + prime
+          
+  return -1 // No match
+
+Time complexity: Average O(n + m), worst-case O(n*m)
+Space complexity: O(1)`,
     videoId: "qQ8vS2btsxI",
     problemLink: "https://leetcode.com/problems/implement-strstr/",
   },
+
   "KMP Algorithm": {
-    description: `KMP is a linear-time string matching algorithm using prefix function.
+    description: `Knuth–Morris–Pratt builds a longest-prefix-suffix (LPS) table to skip redundant comparisons while matching a pattern in text.
 
-Algorithm:
-------------
-The KMP algorithm works in two main steps:
+Algorithm (Pseudocode):
+// 1. Build Longest Prefix Suffix (LPS) table
+function computeLPS(pattern):
+  m = length(pattern)
+  lps = new Array(m) initialized to 0
+  length = 0 // length of the previous longest prefix suffix
+  i = 1
+  
+  while i < m:
+    if pattern[i] == pattern[length]:
+      length = length + 1
+      lps[i] = length
+      i = i + 1
+    else:
+      if length != 0:
+        length = lps[length - 1]
+      else:
+        lps[i] = 0
+        i = i + 1
+  return lps
 
-1. Preprocessing Step – Build the LPS Array:
-------------------------------------------------
-i.      First, we process the pattern to create an array called LPS (Longest Prefix Suffix).
-ii.     This array tells us: "If a mismatch happens at this point, how far back in the pattern can we jump without missing any potential matches?"
-iii.    It helps us avoid starting from the beginning of the pattern again after a mismatch.
-iv.     This step is done only once, before we start searching in the text.
+// 2. KMP Search
+function KMP_Search(text, pattern):
+  n = length(text), m = length(pattern)
+  lps = computeLPS(pattern)
+  i = 0 // index for text
+  j = 0 // index for pattern
+  
+  while i < n:
+    if pattern[j] == text[i]:
+      i = i + 1
+      j = j + 1
 
-2. Matching Step – Search the Pattern in the Text
-------------------------------------------------------
-i.      Now, we start comparing the pattern with the text, one character at a time.
-ii.     If the characters match: Move forward in both the text and the pattern.
-iii.    If the characters don’t match:
-    => If we're not at the start of the pattern, we use the LPS value at the previous index (i.e., lps[j - 1]) to move the pattern pointer j back to that position. This means: jump to the longest prefix that is also a suffix — no need to recheck those characters.
-    => If we're at the start (i.e., j == 0), simply move the text pointer i forward to try the next character.
-iv. If we reach the end of the pattern (i.e., all characters matched), we found a match! Record the starting index and continue searching.
-`,
+    if j == m:
+      return (i - j) // Found pattern at index (i - j)
+      // j = lps[j - 1] // (if searching for all occurrences)
+    
+    // Mismatch after j matches
+    else if i < n and pattern[j] != text[i]:
+      if j != 0:
+        j = lps[j - 1] // Use LPS table
+      else:
+        i = i + 1
+  return -1 // Not found
+
+Time complexity: O(n + m)
+Space complexity: O(m)`,
     videoId: "JoF0Z7nVSrA",
     problemLink: "https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/",
   },
-  Trie: {
-    description: `Trie is a tree-like data structure used for efficient string retrieval.
 
-Algorithm:
-------------
-    1. Search (word): To check if the string 'word' is present in the Trie or not.
-    2. Insert (word): To insert a string 'word' in the Trie.
-    3. Start With(word): To check if there is a string that has the prefix 'word'.
+  "Trie": {
+    description: `A prefix tree for efficient retrieval of strings by prefix. Supports insert, search and prefix queries in O(length) time.
 
-Trie is a data structure that is like a tree data structure in its organisation. It consists of nodes that store letters or alphabets of words, which can be added, retrieved, and deleted from it in a very efficient way.
-`,
+Algorithm (Core Operations Pseudocode):
+// Node structure
+class TrieNode:
+  children = new Map() // char -> TrieNode
+  isEndOfWord = false
+
+class Trie:
+  root = new TrieNode()
+
+  // 1. Insertion
+  function insert(word):
+    node = root
+    for char in word:
+      if not node.children.has(char):
+        node.children.set(char, new TrieNode())
+      node = node.children.get(char)
+    node.isEndOfWord = true
+  
+  // 2. Search
+  function search(word):
+    node = root
+    for char in word:
+      if not node.children.has(char):
+        return false // Word not in trie
+      node = node.children.get(char)
+    return node.isEndOfWord
+
+  // 3. Prefix Search
+  function startsWith(prefix):
+    node = root
+    for char in prefix:
+      if not node.children.has(char):
+        return false // Prefix not in trie
+      node = node.children.get(char)
+    return true // Prefix exists
+
+Time complexity: O(L) per operation (L = string length)
+Space complexity: O(N*L_avg) (N = num words, L_avg = avg length)`,
     videoId: "zIjfhVPRZCg",
     problemLink: "https://leetcode.com/problems/implement-trie-prefix-tree/",
   },
