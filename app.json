@@ -11,19 +11,26 @@
     "runtimeVersion": {
       "policy": "sdkVersion"
     },
+
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yourcompany.cpcompanion",
-      "associatedDomains": ["applinks:cpcompanion.com"],
+      "associatedDomains": [
+        "applinks:cpcompanion.com"
+      ],
       "config": {
         "usesNonExemptEncryption": false
       },
       "infoPlist": {
         "NSFaceIDUsageDescription": "Use Face ID to authenticate",
         "NSCameraUsageDescription": "Allow camera access to scan documents",
-        "LSApplicationQueriesSchemes": ["cpcompanion", "https"]
+        "LSApplicationQueriesSchemes": [
+          "cpcompanion",
+          "https"
+        ]
       }
     },
+
     "android": {
       "package": "com.yourcompany.cpcompanion",
       "adaptiveIcon": {
@@ -33,6 +40,7 @@
       "intentFilters": [
         {
           "action": "VIEW",
+          "category": ["BROWSABLE", "DEFAULT"],
           "data": [
             {
               "scheme": "https",
@@ -43,28 +51,19 @@
               "scheme": "cpcompanion"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"],
           "autoVerify": true
         }
       ],
       "edgeToEdgeEnabled": true,
-      "softwareKeyboardLayoutMode": "pan",
-      "navigationBar": {
-        "visible": "sticky-immersive",
-        "backgroundColor": "#ffffff",
-        "barStyle": "dark-content"
-      }
+      "softwareKeyboardLayoutMode": "pan"
     },
+
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png",
-      "build": {
-        "babel": {
-          "include": ["@clerk/clerk-react"]
-        }
-      }
+      "favicon": "./assets/images/favicon.png"
     },
+
     "plugins": [
       "expo-secure-store",
       "expo-router",
@@ -85,22 +84,27 @@
         "expo-build-properties",
         {
           "ios": {
-            "flipper": true,
-            "newArchEnabled": true
+            "newArchEnabled": true,
+            "flipper": false
           },
           "android": {
             "newArchEnabled": true,
-            "kotlinVersion": "1.9.0"
+            "kotlinVersion": "1.9.24"
           }
         }
       ]
     ],
+
     "experiments": {
       "typedRoutes": true,
       "tsconfigPaths": true
     },
+
     "extra": {
-  "clerkPublishableKey": "${EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}"
-}
+      "clerkPublishableKey": "${EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}",
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    }
   }
 }
