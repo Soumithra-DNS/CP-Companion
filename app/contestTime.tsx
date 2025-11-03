@@ -105,7 +105,7 @@ export default function ContestTimeScreen(): React.JSX.Element {
   const [currentTime, setCurrentTime] = useState(new Date());
   const fadeAnim = useState(new Animated.Value(0))[0];
   const scaleAnim = useState(new Animated.Value(0.98))[0];
-  
+
   // State for "Show More" functionality
   const [visibleLiveCount, setVisibleLiveCount] = useState(10);
   const [visibleUpcomingCount, setVisibleUpcomingCount] = useState(10);
@@ -559,8 +559,9 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight || 40 : 0,
-    paddingHorizontal: 1,
+    // COMMENT: কন্টেইনারের উপরের প্যাডিং কমানো হলো যাতে স্ক্রল সেকশন উপরে ওঠে।
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 20) : 0, 
+    paddingHorizontal: ,
   },
   webContainer: {
     alignSelf: "center",
@@ -573,11 +574,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   header: {
-    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 24) + 1 : 40,
+    // COMMENT: হেডার সেকশনের প্যাডিং এবং টপ মার্জিন কমানো হলো যাতে টাইটেল সেকশন ছোট হয় এবং উপরে উঠে যায়।
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 12) + 1 : 12, 
     paddingHorizontal: 0,
     paddingBottom: 0,
     alignItems: "center",
-    top: -25,
+    top: -25, // আরও উপরে তোলার জন্য কমানো হয়েছে। আগের মান ছিল -40
   },
   titleContainer: {
     justifyContent: "center",
@@ -598,7 +600,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   scrollContent: {
-    paddingTop: 8,
+    // COMMENT: স্ক্রল কন্টেন্টের উপরের প্যাডিং কমানো হলো যাতে কন্টেন্ট উপরে শুরু হয়।
+    paddingTop: 10, 
     paddingBottom: 32,
   },
   errorBanner: {

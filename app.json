@@ -11,7 +11,6 @@
     "runtimeVersion": {
       "policy": "sdkVersion"
     },
-
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yourcompany.cpcompanion",
@@ -30,7 +29,6 @@
         ]
       }
     },
-
     "android": {
       "package": "com.yourcompany.cpcompanion",
       "adaptiveIcon": {
@@ -40,7 +38,10 @@
       "intentFilters": [
         {
           "action": "VIEW",
-          "category": ["BROWSABLE", "DEFAULT"],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ],
           "data": [
             {
               "scheme": "https",
@@ -57,13 +58,11 @@
       "edgeToEdgeEnabled": true,
       "softwareKeyboardLayoutMode": "pan"
     },
-
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-
     "plugins": [
       "expo-secure-store",
       "expo-router",
@@ -94,16 +93,15 @@
         }
       ]
     ],
-
     "experiments": {
       "typedRoutes": true,
       "tsconfigPaths": true
     },
-
     "extra": {
       "clerkPublishableKey": "${EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}",
+      "router": {},
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "2ef5cda7-717d-4fcf-9a31-2be99f45ddee"
       }
     }
   }
