@@ -10,24 +10,24 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
 } from 'react-native';
 import { useSignIn } from '@clerk/clerk-expo';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 
 const COLORS = {
-  primary: '#3A59D1',
-  secondary: '#3D90D7',
-  accent1: '#7AC6D2',
-  accent2: '#B5FCCD',
-  darkBg: '#0f172a',
-  white: '#ffffff',
-  translucentWhite: 'rgba(255, 255, 255, 0.7)',
-  inputBg: 'rgba(255, 255, 255, 0.06)',
-  inputBorder: 'rgba(255, 255, 255, 0.2)',
-  placeholder: '#94a3b8',
-  error: '#f87171',
+  background: '#F3E2D4',
+  primary: '#C5B0CD',
+  secondary: '#415E72',
+  textDark: '#17313E',
+  white: '#FFFFFF',
+  translucentPrimary: 'rgba(197,176,205,0.4)',
+  cardBg: 'rgba(255,255,255,0.85)',
+  menuBorder: 'rgba(197,176,205,0.3)',
+  inputBg: 'rgba(255,255,255,0.6)',
+  inputBorder: 'rgba(197,176,205,0.5)',
+  placeholder: '#7A8A99',
 };
 
 export default function ForgotPasswordScreen() {
@@ -42,7 +42,6 @@ export default function ForgotPasswordScreen() {
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  // Added state for confirm password visibility
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const isValidEmail = (email: string) =>
@@ -98,10 +97,9 @@ export default function ForgotPasswordScreen() {
       if (result?.status === 'complete') {
         await setActive?.({ session: result.createdSessionId });
         Alert.alert('Success', 'Your password has been reset successfully.', [
-          { text: 'OK', onPress: () => router.replace('/(home)/home') }, // Navigate to home or dashboard after success
+          { text: 'OK', onPress: () => router.replace('/(home)/home') },
         ]);
       } else {
-        // This case might not be reached if an error is thrown, but it's good practice
         Alert.alert('Error', 'Could not reset password. Please try again.');
       }
     } catch (error: any) {
@@ -113,239 +111,300 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.gradient}>
+    <View style={styles.page}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-          <View style={styles.content}>
-            <View style={styles.header}>
-              <MaterialIcons name="lock-reset" size={54} color={COLORS.primary} style={styles.logoIcon} />
-              <Text style={styles.title}>
-                <Text style={{ color: COLORS.primary }}>Reset</Text> Password
-              </Text>
-              <Text style={styles.subtitle}>
-                {emailSent
-                  ? `Enter the code sent to ${email} and set a new password.`
-                  : 'Enter your email to receive a password reset code.'}
-              </Text>
-            </View>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer} 
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Back Button */}
+          <View style={styles.header}>
+            <TouchableOpacity 
+              onPress={() => router.back()} 
+              style={styles.backButton}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
+            >
+              <View style={styles.backButtonInner}>
+                <MaterialIcons name="arrow-back" size={24} color={COLORS.textDark} />
+              </View>
+            </TouchableOpacity>
+          </View>
 
-            {/* Conditional Rendering: Show email form OR reset form */}
-            {emailSent ? (
-              // STEP 2: FORM TO ENTER CODE AND NEW PASSWORD
-              <View style={styles.card}>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Reset Code</Text>
+          {/* Logo Section */}
+          <View style={styles.logoSection}>
+            <View style={styles.iconCircle}>
+              <MaterialIcons name="lock-reset" size={48} color={COLORS.secondary} />
+            </View>
+            <Text style={styles.title}>
+              <Text style={{ color: COLORS.textDark }}>Reset</Text>
+              <Text style={{ color: COLORS.secondary }}> Password</Text>
+            </Text>
+            <Text style={styles.subtitle}>
+              {emailSent
+                ? `Enter the code sent to ${email} and set a new password.`
+                : 'Enter your email to receive a password reset code.'}
+            </Text>
+          </View>
+
+          {/* Conditional Rendering: Show email form OR reset form */}
+          {emailSent ? (
+            // STEP 2: FORM TO ENTER CODE AND NEW PASSWORD
+            <View style={styles.card}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Reset Code</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter the 6-digit code"
+                  placeholderTextColor={COLORS.placeholder}
+                  keyboardType="number-pad"
+                  value={code}
+                  onChangeText={setCode}
+                  selectionColor={COLORS.secondary}
+                  editable={!loading}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>New Password</Text>
+                <View style={styles.passwordWrapper}>
                   <TextInput
-                    style={styles.input}
-                    placeholder="Enter the 6-digit code"
+                    style={styles.passwordInput}
+                    placeholder="Enter new password"
                     placeholderTextColor={COLORS.placeholder}
-                    keyboardType="number-pad"
-                    value={code}
-                    onChangeText={setCode}
-                    selectionColor={COLORS.primary}
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={setPassword}
+                    selectionColor={COLORS.secondary}
                     editable={!loading}
                   />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>New Password</Text>
-                  <View style={styles.passwordContainer}>
-                    <TextInput
-                      style={styles.passwordInput}
-                      placeholder="Enter new password"
-                      placeholderTextColor={COLORS.placeholder}
-                      secureTextEntry={!showPassword}
-                      value={password}
-                      onChangeText={setPassword}
-                      selectionColor={COLORS.primary}
-                      editable={!loading}
+                  <TouchableOpacity 
+                    style={styles.eyeButton}
+                    onPress={() => setShowPassword(!showPassword)}
+                    disabled={loading}
+                  >
+                    <MaterialIcons 
+                      name={showPassword ? 'visibility-off' : 'visibility'} 
+                      size={22} 
+                      color={loading ? COLORS.placeholder : COLORS.secondary} 
                     />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                      <MaterialIcons name={showPassword ? 'visibility' : 'visibility-off'} size={24} color={COLORS.placeholder} />
-                    </TouchableOpacity>
-                  </View>
+                  </TouchableOpacity>
                 </View>
-
-                {/* --- MODIFIED SECTION START --- */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Confirm New Password</Text>
-                  <View style={styles.passwordContainer}>
-                    <TextInput
-                      style={styles.passwordInput}
-                      placeholder="Confirm your new password"
-                      placeholderTextColor={COLORS.placeholder}
-                      secureTextEntry={!showConfirmPassword}
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
-                      selectionColor={COLORS.primary}
-                      editable={!loading}
-                    />
-                    <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                        <MaterialIcons name={showConfirmPassword ? 'visibility' : 'visibility-off'} size={24} color={COLORS.placeholder} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                {/* --- MODIFIED SECTION END --- */}
-
-                <TouchableOpacity
-                  style={[styles.button, loading && styles.disabledButton]}
-                  onPress={handleResetPassword}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color={COLORS.white} />
-                  ) : (
-                    <Text style={styles.buttonText}>Reset Password</Text>
-                  )}
-                </TouchableOpacity>
               </View>
-            ) : (
-              // STEP 1: FORM TO ENTER EMAIL
-              <View style={styles.card}>
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Email Address</Text>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Confirm New Password</Text>
+                <View style={styles.passwordWrapper}>
                   <TextInput
-                    style={styles.input}
-                    placeholder="Enter your email"
+                    style={styles.passwordInput}
+                    placeholder="Confirm your new password"
                     placeholderTextColor={COLORS.placeholder}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    value={email}
-                    onChangeText={setEmail}
-                    selectionColor={COLORS.primary}
+                    secureTextEntry={!showConfirmPassword}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    selectionColor={COLORS.secondary}
                     editable={!loading}
                   />
+                  <TouchableOpacity 
+                    style={styles.eyeButton}
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    disabled={loading}
+                  >
+                    <MaterialIcons 
+                      name={showConfirmPassword ? 'visibility-off' : 'visibility'} 
+                      size={22} 
+                      color={loading ? COLORS.placeholder : COLORS.secondary} 
+                    />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  style={[styles.button, loading && styles.disabledButton]}
-                  onPress={handleSendResetCode}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color={COLORS.white} />
-                  ) : (
-                    <Text style={styles.buttonText}>Send Reset Code</Text>
-                  )}
-                </TouchableOpacity>
               </View>
-            )}
 
-            <View style={styles.footer}>
-              <Link href="/(auth)/sign-in" asChild>
-                <TouchableOpacity style={styles.linkContainer} disabled={loading}>
-                  <Text style={[styles.link, loading && styles.disabledLink]}>
-                    <MaterialIcons name="arrow-back" size={16} color={COLORS.accent1} /> Back to Sign In
-                  </Text>
-                </TouchableOpacity>
-              </Link>
+              <TouchableOpacity
+                style={[styles.button, loading && styles.disabledButton]}
+                onPress={handleResetPassword}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color={COLORS.white} />
+                ) : (
+                  <Text style={styles.buttonText}>Reset Password</Text>
+                )}
+              </TouchableOpacity>
             </View>
+          ) : (
+            // STEP 1: FORM TO ENTER EMAIL
+            <View style={styles.card}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email Address</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your email"
+                  placeholderTextColor={COLORS.placeholder}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  value={email}
+                  onChangeText={setEmail}
+                  selectionColor={COLORS.secondary}
+                  editable={!loading}
+                />
+              </View>
+              <TouchableOpacity
+                style={[styles.button, loading && styles.disabledButton]}
+                onPress={handleSendResetCode}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color={COLORS.white} />
+                ) : (
+                  <Text style={styles.buttonText}>Send Reset Code</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <View style={styles.footer}>
+            <Link href="/(auth)/sign-in" asChild>
+              <TouchableOpacity disabled={loading}>
+                <Text style={[styles.link, loading && styles.disabledLink]}>
+                  <MaterialIcons name="arrow-back" size={16} color={COLORS.secondary} /> Back to Sign In
+                </Text>
+              </TouchableOpacity>
+            </Link>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
+  page: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
   container: { flex: 1 },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  content: {
-    alignItems: 'center',
-    width: '100%',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 6 : 36,
+    paddingBottom: 40,
   },
   header: {
+    marginBottom: 20,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+  },
+  backButtonInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: COLORS.translucentPrimary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.menuBorder,
+  },
+  logoSection: {
     alignItems: 'center',
     marginBottom: 32,
   },
-  logoIcon: {
-    marginBottom: 12,
-    textShadowColor: 'rgba(58, 89, 209, 0.4)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: COLORS.translucentPrimary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.menuBorder,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: COLORS.white,
+    fontWeight: '800',
     marginBottom: 8,
-    letterSpacing: 1.1,
   },
   subtitle: {
-    color: COLORS.translucentWhite,
-    fontSize: 16,
+    fontSize: 15,
+    color: COLORS.secondary,
+    fontWeight: '500',
     textAlign: 'center',
-    fontWeight: '400',
-    maxWidth: 300,
-    lineHeight: 24,
+    maxWidth: 340,
+    lineHeight: 22,
+    paddingHorizontal: 10,
   },
   card: {
     width: '100%',
-    maxWidth: 400,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 18,
-    padding: 28,
-    marginTop: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    elevation: 8,
+    maxWidth: 420,
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 16,
+    padding: 24,
+    alignSelf: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: COLORS.translucentPrimary,
+    shadowColor: COLORS.secondary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   inputGroup: {
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 18,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.white,
-    marginBottom: 6,
+    fontWeight: '600',
+    color: COLORS.textDark,
+    marginBottom: 8,
   },
   input: {
     backgroundColor: COLORS.inputBg,
     borderColor: COLORS.inputBorder,
-    borderWidth: 1.2,
-    borderRadius: 10,
+    borderWidth: 1.5,
+    borderRadius: 12,
     padding: 14,
     fontSize: 16,
-    color: COLORS.white,
+    color: COLORS.textDark,
     width: '100%',
   },
-  passwordContainer: {
+  passwordWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.inputBg,
     borderColor: COLORS.inputBorder,
-    borderWidth: 1.2,
-    borderRadius: 10,
-    paddingRight: 14,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    width: '100%',
   },
   passwordInput: {
     flex: 1,
     padding: 14,
     fontSize: 16,
-    color: COLORS.white,
+    color: COLORS.textDark,
+  },
+  eyeButton: {
+    padding: 14,
   },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.secondary,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 12,
     width: '100%',
     alignItems: 'center',
-    // Removed marginBottom from here to apply it conditionally
+    shadowColor: COLORS.secondary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   disabledButton: {
     opacity: 0.7,
@@ -354,19 +413,14 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: '700',
     fontSize: 16,
-    letterSpacing: 0.5,
   },
   footer: {
     marginTop: 24,
     width: '100%',
     alignItems: 'center',
   },
-  linkContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
   link: {
-    color: COLORS.accent1,
+    color: COLORS.secondary,
     fontWeight: '600',
     fontSize: 15,
     textAlign: 'center',

@@ -1,6 +1,5 @@
 import { useSignUp } from '@clerk/clerk-expo';
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -9,28 +8,30 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TextInputProps,
   TouchableOpacity,
   View,
-  Dimensions,
 } from 'react-native';
 
-// --- Constants and Styles ---
 const COLORS = {
-  primary: '#3A59D1',
-  secondary: '#3D90D7',
-  accent1: '#7AC6D2',
-  accent2: '#B5FCCD',
-  darkBg: '#0f172a',
-  white: '#ffffff',
-  inputBg: 'rgba(255, 255, 255, 0.12)',
-  inputBorder: 'rgba(255, 255, 255, 0.3)',
+  background: '#F3E2D4',
+  primary: '#C5B0CD',
+  secondary: '#415E72',
+  textDark: '#17313E',
+  white: '#FFFFFF',
+  translucentPrimary: 'rgba(197,176,205,0.4)',
+  cardBg: 'rgba(255,255,255,0.85)',
+  menuBorder: 'rgba(197,176,205,0.3)',
+  inputBg: 'rgba(255,255,255,0.6)',
+  inputBorder: 'rgba(197,176,205,0.5)',
+  placeholder: '#7A8A99',
 };
 
-// --- Prop Types for Helper Components ---
+// --- Prop Types ---
 type AuthHeaderProps = { title: string; subtitle: string };
 type AuthButtonProps = { title: string; onPress: () => void; loading?: boolean };
 type PasswordFieldProps = {
@@ -39,25 +40,33 @@ type PasswordFieldProps = {
   onChange: (text: string) => void;
   visible: boolean;
   toggleVisible: () => void;
+  loading?: boolean;
 };
 interface InputFieldProps extends TextInputProps {
   label: string;
   value: string;
   onChangeText: (text: string) => void;
+  loading?: boolean;
 }
 type VerificationScreenProps = {
   code: string;
   setCode: (code: string) => void;
   handleVerification: () => void;
   loading?: boolean;
+  onBack: () => void;
 };
 
-// --- Helper components with corrected types ---
+// --- Helper Components ---
 
 const AuthHeader = ({ title, subtitle }: AuthHeaderProps) => (
-  <View style={styles.header}>
-    <MaterialIcons name="code" size={54} color={COLORS.primary} style={styles.logoIcon} />
-    <Text style={styles.title}>{title}</Text>
+  <View style={styles.logoSection}>
+    <View style={styles.iconCircle}>
+      <MaterialIcons name="code" size={48} color={COLORS.secondary} />
+    </View>
+    <Text style={styles.title}>
+      <Text style={{ color: COLORS.textDark }}>CP</Text>
+      <Text style={{ color: COLORS.secondary }}> Companion</Text>
+    </Text>
     <Text style={styles.subtitle}>{subtitle}</Text>
   </View>
 );
@@ -72,64 +81,91 @@ const AuthButton = ({ title, onPress, loading }: AuthButtonProps) => (
   </TouchableOpacity>
 );
 
-const PasswordField = ({ label, value, onChange, visible, toggleVisible }: PasswordFieldProps) => (
+const PasswordField = ({ label, value, onChange, visible, toggleVisible, loading }: PasswordFieldProps) => (
   <View style={styles.inputGroup}>
     <Text style={styles.label}>{label}</Text>
     <View style={styles.passwordWrapper}>
       <TextInput
         style={styles.passwordInput}
         placeholder={`Enter ${label.toLowerCase()}`}
-        placeholderTextColor="#cbd5e1"
+        placeholderTextColor={COLORS.placeholder}
         secureTextEntry={!visible}
         value={value}
         onChangeText={onChange}
-        selectionColor={COLORS.primary}
+        selectionColor={COLORS.secondary}
+        editable={!loading}
       />
-      <TouchableOpacity style={styles.eyeButton} onPress={toggleVisible}>
-        <MaterialIcons name={visible ? 'visibility-off' : 'visibility'} size={22} color="#94a3b8" />
+      <TouchableOpacity style={styles.eyeButton} onPress={toggleVisible} disabled={loading}>
+        <MaterialIcons 
+          name={visible ? 'visibility-off' : 'visibility'} 
+          size={22} 
+          color={loading ? COLORS.placeholder : COLORS.secondary} 
+        />
       </TouchableOpacity>
     </View>
   </View>
 );
 
-const InputField = ({ label, value, onChangeText, ...props }: InputFieldProps) => (
+const InputField = ({ label, value, onChangeText, loading, ...props }: InputFieldProps) => (
   <View style={styles.inputGroup}>
     <Text style={styles.label}>{label}</Text>
     <TextInput
       style={styles.input}
       placeholder={`Enter ${label.toLowerCase()}`}
-      placeholderTextColor="#cbd5e1"
+      placeholderTextColor={COLORS.placeholder}
       value={value}
       onChangeText={onChangeText}
-      selectionColor={COLORS.primary}
+      selectionColor={COLORS.secondary}
+      editable={!loading}
       {...props}
     />
   </View>
 );
 
-const VerificationScreen = ({ code, setCode, handleVerification, loading }: VerificationScreenProps) => (
-  <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.gradient}>
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+const VerificationScreen = ({ code, setCode, handleVerification, loading, onBack }: VerificationScreenProps) => (
+  <View style={styles.page}>
+    <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      style={styles.container}
+    >
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
-        removeClippedSubviews={false}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.content}>
-          <View style={styles.mainContentContainer}>
-            <AuthHeader title="Verify Email" subtitle="Enter the code sent to your email" />
-            <View style={styles.card}>
-              <InputField label="Verification Code" value={code} onChangeText={setCode} />
-              <AuthButton title="Verify" onPress={handleVerification} loading={loading} />
+        {/* Back Button */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            onPress={onBack}
+            style={styles.backButton}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <View style={styles.backButtonInner}>
+              <MaterialIcons name="arrow-back" size={24} color={COLORS.textDark} />
             </View>
-          </View>
+          </TouchableOpacity>
+        </View>
+
+        <AuthHeader title="Verify Email" subtitle="Enter the code sent to your email" />
+        
+        <View style={styles.card}>
+          <InputField 
+            label="Verification Code" 
+            value={code} 
+            onChangeText={setCode}
+            keyboardType="number-pad"
+            loading={loading}
+          />
+          <AuthButton title="Verify" onPress={handleVerification} loading={loading} />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
-  </LinearGradient>
+  </View>
 );
 
-// --- Main SignUp Screen Component ---
+// --- Main SignUp Screen ---
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -186,8 +222,7 @@ export default function SignUpScreen() {
       const completeSignUp = await signUp.attemptEmailAddressVerification({ code });
       await setActive({ session: completeSignUp.createdSessionId });
       router.replace('/(home)/home');
-    } catch (err: any)
-{
+    } catch (err: any) {
       const message = err?.errors?.[0]?.message || err?.message || 'Verification failed.';
       Alert.alert('Error', message);
     } finally {
@@ -202,134 +237,171 @@ export default function SignUpScreen() {
         setCode={setCode}
         handleVerification={handleVerification}
         loading={loading}
+        onBack={() => setPendingVerification(false)}
       />
     );
   }
 
   return (
-    <LinearGradient colors={[COLORS.darkBg, '#1e293b', '#334155']} style={styles.gradient}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+    <View style={styles.page}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        style={styles.container}
+      >
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
-          removeClippedSubviews={false}
+          showsVerticalScrollIndicator={false}
         >
-          <View style={styles.content}>
-            <View style={styles.mainContentContainer}>
-              <AuthHeader
-                title="Create Account"
-                subtitle="Start your competitive programming journey"
-              />
-              <View style={styles.card}>
-                <InputField
-                  label="Email Address"
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
-                <PasswordField
-                  label="Password"
-                  value={password}
-                  onChange={setPassword}
-                  visible={isPasswordVisible}
-                  toggleVisible={() => setIsPasswordVisible(!isPasswordVisible)}
-                />
-                <PasswordField
-                  label="Confirm Password"
-                  value={confirmPassword}
-                  onChange={setConfirmPassword}
-                  visible={isConfirmPasswordVisible}
-                  toggleVisible={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
-                />
-
-                <AuthButton title="Sign Up" onPress={handleSignUp} loading={loading} />
-
-                <View style={styles.footer}>
-                  <Text style={styles.footerText}>Already have an account? </Text>
-                  <Link href="/(auth)/sign-in" asChild>
-                    <TouchableOpacity disabled={loading}>
-                      <Text style={[styles.footerLink, loading && styles.disabledLink]}>Login</Text>
-                    </TouchableOpacity>
-                  </Link>
-                </View>
+          {/* Back Button */}
+          <View style={styles.header}>
+            <TouchableOpacity 
+              onPress={() => router.back()} 
+              style={styles.backButton}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
+            >
+              <View style={styles.backButtonInner}>
+                <MaterialIcons name="arrow-back" size={24} color={COLORS.textDark} />
               </View>
+            </TouchableOpacity>
+          </View>
+
+          <AuthHeader
+            title="Create Account"
+            subtitle="Start your competitive programming journey"
+          />
+          
+          <View style={styles.card}>
+            <InputField
+              label="Email Address"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              loading={loading}
+            />
+            <PasswordField
+              label="Password"
+              value={password}
+              onChange={setPassword}
+              visible={isPasswordVisible}
+              toggleVisible={() => setIsPasswordVisible(!isPasswordVisible)}
+              loading={loading}
+            />
+            <PasswordField
+              label="Confirm Password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              visible={isConfirmPasswordVisible}
+              toggleVisible={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
+              loading={loading}
+            />
+
+            <AuthButton title="Sign Up" onPress={handleSignUp} loading={loading} />
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account? </Text>
+              <Link href="/(auth)/sign-in" asChild>
+                <TouchableOpacity disabled={loading}>
+                  <Text style={[styles.footerLink, loading && styles.disabledLink]}>Login</Text>
+                </TouchableOpacity>
+              </Link>
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: { flex: 1 },
-  container: { flex: 1 },
-  scrollContainer: { flexGrow: 1, paddingHorizontal: 20, paddingVertical: 20 },
-  content: { flex: 1, justifyContent: 'center' },
-  mainContentContainer: {
-    width: '100%',
-    alignItems: 'center',
+  page: {
+    flex: 1,
+    backgroundColor: COLORS.background,
   },
-  header: { alignItems: 'center', marginBottom: 28 },
-  logoIcon: {
-    marginBottom: 10,
-    ...Platform.select({
-      web: {
-        textShadow: `0px 2px 8px ${COLORS.primary}`,
-      },
-      default: {
-        textShadowColor: COLORS.primary,
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 8,
-      },
-    }),
+  container: { flex: 1 },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 6 : 36,
+    paddingBottom: 40,
+  },
+  header: {
+    marginBottom: 20,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+  },
+  backButtonInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: COLORS.translucentPrimary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.menuBorder,
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: COLORS.translucentPrimary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.menuBorder,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: COLORS.white,
-    marginBottom: 6,
-    letterSpacing: 1.2,
+    fontWeight: '800',
+    marginBottom: 8,
   },
   subtitle: {
-    color: COLORS.accent2,
     fontSize: 16,
-    textAlign: 'center',
-    fontWeight: '400',
+    color: COLORS.secondary,
+    fontWeight: '500',
   },
   card: {
     width: '100%',
-    maxWidth: 400,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 18,
-    padding: 28,
-    marginTop: 10,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.12,
-        shadowRadius: 18,
-      },
-      android: {
-        elevation: 8,
-      },
-      web: {
-        boxShadow: '0px 8px 18px rgba(0,0,0,0.12)',
-      },
-    }),
+    maxWidth: 420,
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 16,
+    padding: 24,
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.translucentPrimary,
+    shadowColor: COLORS.secondary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  inputGroup: { width: '100%', marginBottom: 18 },
-  label: { fontSize: 14, fontWeight: '500', color: COLORS.white, marginBottom: 6 },
+  inputGroup: { 
+    width: '100%', 
+    marginBottom: 18,
+  },
+  label: { 
+    fontSize: 14, 
+    fontWeight: '600', 
+    color: COLORS.textDark, 
+    marginBottom: 8,
+  },
   input: {
     backgroundColor: COLORS.inputBg,
     borderColor: COLORS.inputBorder,
-    borderWidth: 1,
-    borderRadius: 10,
+    borderWidth: 1.5,
+    borderRadius: 12,
     padding: 14,
     fontSize: 16,
-    color: COLORS.white,
+    color: COLORS.textDark,
     width: '100%',
   },
   passwordWrapper: {
@@ -337,48 +409,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.inputBg,
     borderColor: COLORS.inputBorder,
-    borderWidth: 1,
-    borderRadius: 10,
+    borderWidth: 1.5,
+    borderRadius: 12,
     width: '100%',
   },
   passwordInput: {
     flex: 1,
     padding: 14,
     fontSize: 16,
-    color: COLORS.white,
+    color: COLORS.textDark,
   },
   eyeButton: { padding: 14 },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.secondary,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 12,
     width: '100%',
     alignItems: 'center',
     marginTop: 10,
-    ...Platform.select({
-      ios: {
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.18,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 2,
-      },
-      web: {
-        boxShadow: `0px 2px 6px rgba(58, 89, 209, 0.18)`,
-      },
-    }),
+    marginBottom: 24,
+    shadowColor: COLORS.secondary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   disabledButton: { opacity: 0.7 },
   buttonText: {
     color: COLORS.white,
     fontWeight: '700',
-    fontSize: 17,
-    letterSpacing: 0.5,
+    fontSize: 16,
   },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 14 },
-  footerText: { color: COLORS.white, fontSize: 14 },
-  footerLink: { color: COLORS.accent1, fontWeight: '600', fontSize: 14 },
+  footer: { 
+    flexDirection: 'row', 
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footerText: { 
+    color: COLORS.secondary, 
+    fontSize: 14,
+  },
+  footerLink: { 
+    color: COLORS.textDark, 
+    fontWeight: '600', 
+    fontSize: 14,
+  },
   disabledLink: { opacity: 0.5 },
 });
