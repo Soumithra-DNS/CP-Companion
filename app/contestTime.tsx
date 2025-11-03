@@ -151,7 +151,7 @@ export default function ContestTimeScreen(): React.JSX.Element {
           .map(async ([key, data]) => {
             try {
               if (key === "codeforces") {
-                const resp = await axios.get(data.api);
+                const resp = await axios.get<{ status: string; result: any[] }>(data.api);
                 if (resp.data.status !== "OK" || !Array.isArray(resp.data.result)) return [];
                 return resp.data.result
                   .map((c: any) => {
@@ -175,8 +175,8 @@ export default function ContestTimeScreen(): React.JSX.Element {
               }
 
               if (key === "codechef") {
-                const resp = await axios.get(data.api);
-                const payload = resp.data;
+                const resp = await axios.get<any>(data.api);
+                const payload: any = resp.data;
                 
                 // CodeChef API returns present_contests and future_contests
                 const presentContests = Array.isArray(payload.present_contests) ? payload.present_contests : [];
@@ -212,9 +212,14 @@ export default function ContestTimeScreen(): React.JSX.Element {
 
               if (key === "leetcode") {
                 try {
-                  const resp = await axios.post(data.api, { query: data.query }, { headers: { "Content-Type": "application/json" } });
-                  if (resp.data.data?.allContests) {
-                    return resp.data.data.allContests
+                  const resp = await axios.post<{ data?: { allContests?: any[] } }>(
+                    data.api,
+                    { query: data.query },
+                    { headers: { "Content-Type": "application/json" } }
+                  );
+                  const allContests = resp.data?.data?.allContests;
+                  if (Array.isArray(allContests)) {
+                    return allContests
                       .map((c: any) => {
                         const start = Number(c.startTime);
                         const dur = Number(c.duration);
@@ -559,9 +564,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    // COMMENT: কন্টেইনারের উপরের প্যাডিং কমানো হলো যাতে স্ক্রল সেকশন উপরে ওঠে।
-    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 20) : 0, 
-    paddingHorizontal: ,
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 16) : 8,
+    paddingHorizontal: 12,
   },
   webContainer: {
     alignSelf: "center",
@@ -574,19 +578,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   header: {
-    // COMMENT: হেডার সেকশনের প্যাডিং এবং টপ মার্জিন কমানো হলো যাতে টাইটেল সেকশন ছোট হয় এবং উপরে উঠে যায়।
-    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 12) + 1 : 12, 
+    paddingTop: 8,
     paddingHorizontal: 0,
     paddingBottom: 0,
     alignItems: "center",
-    top: -25, // আরও উপরে তোলার জন্য কমানো হয়েছে। আগের মান ছিল -40
+    marginBottom: 8,
   },
   titleContainer: {
     justifyContent: "center",
     alignItems: "center",
   },
   pageTitle: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "800",
     color: COLORS.primary,
     textAlign: "center",
@@ -597,18 +600,17 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 14,
+    paddingHorizontal: 8,
   },
   scrollContent: {
-    // COMMENT: স্ক্রল কন্টেন্টের উপরের প্যাডিং কমানো হলো যাতে কন্টেন্ট উপরে শুরু হয়।
-    paddingTop: 10, 
-    paddingBottom: 32,
+    paddingTop: 4,
+    paddingBottom: 24,
   },
   errorBanner: {
     backgroundColor: "#FF6B6B",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10,
     flexDirection: "row",
     alignItems: "center",
   },
@@ -618,15 +620,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   section: {
-    marginBottom: 18,
+    marginBottom: 14,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   sectionHeaderText: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "700",
     color: COLORS.primary,
     flex: 1,
@@ -644,33 +646,33 @@ const styles = StyleSheet.create({
   },
   sectionBody: {
     backgroundColor: COLORS.sectionCardBg,
-    borderRadius: 14,
-    padding: 12,
+    borderRadius: 12,
+    padding: 10,
   },
   emptyText: {
     color: COLORS.secondary,
-    padding: 16,
+    padding: 14,
     textAlign: "center",
     fontSize: 14,
   },
   contestCard: {
-    borderRadius: 14,
+    borderRadius: 12,
     overflow: "hidden",
   },
   cardGradient: {
-    borderRadius: 14,
-    padding: 1.5,
+    borderRadius: 12,
+    padding: 1.2,
   },
   cardContent: {
     backgroundColor: COLORS.cardBg,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 10,
+    padding: 10,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   platformInfo: {
     flexDirection: "row",
@@ -678,44 +680,44 @@ const styles = StyleSheet.create({
   },
   platformIconContainer: {
     backgroundColor: "rgba(0,0,0,0.12)",
-    padding: 6,
-    borderRadius: 8,
-    marginRight: 8,
+    padding: 5,
+    borderRadius: 6,
+    marginRight: 6,
   },
   platform: {
     fontWeight: "700",
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.primary,
   },
   statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
     backgroundColor: COLORS.past,
   },
   statusText: {
     color: COLORS.white,
     fontWeight: "700",
-    fontSize: 10,
+    fontSize: 9,
   },
   contestName: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
     color: COLORS.primary,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   timeInfoContainer: {
-    marginBottom: 10,
+    marginBottom: 8,
   },
   timeRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: 4,
   },
   timeText: {
     color: COLORS.primary,
-    marginLeft: 8,
-    fontSize: 13,
+    marginLeft: 6,
+    fontSize: 12,
   },
   cardFooter: {
     flexDirection: "row",
@@ -727,27 +729,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   durationText: {
-    marginLeft: 6,
+    marginLeft: 5,
     color: COLORS.primary,
-    fontSize: 13,
+    fontSize: 12,
   },
   launchButton: {
     backgroundColor: "rgba(255,255,255,0.9)",
-    padding: 6,
-    borderRadius: 18,
+    padding: 5,
+    borderRadius: 16,
   },
   showMoreButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
-    marginTop: 8,
+    padding: 10,
+    marginTop: 6,
     backgroundColor: 'rgba(23,49,62,0.08)',
-    borderRadius: 8,
+    borderRadius: 6,
   },
   showMoreText: {
     color: COLORS.primary,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     marginRight: 4,
   },

@@ -1,12 +1,13 @@
 {
   "name": "cp_companion",
-  "main": "expo-router/entry",
   "version": "1.0.0",
+  "main": "expo-router/entry",
+  "private": true,
   "scripts": {
-    "start": "node --max-old-space-size=4096 node_modules/.bin/expo start",
-    "android": "node --max-old-space-size=4096 node_modules/.bin/expo start --android",
-    "ios": "node --max-old-space-size=4096 node_modules/.bin/expo start --ios",
-    "web": "node --max-old-space-size=4096 node_modules/.bin/expo start --web"
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web"
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.14.1",
@@ -15,7 +16,8 @@
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
-    "expo": "^54.0.21",
+    "axios": "^1.13.1",
+    "expo": "54.0.21",
     "expo-auth-session": "~7.0.8",
     "expo-blur": "~15.0.7",
     "expo-build-properties": "~1.0.9",
@@ -47,12 +49,14 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/axios": "^0.14.4",
+    "@types/axios": "^0.9.36",
     "@types/react": "~19.1.10",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
-    "expo-module-scripts": "^4.1.8",
     "typescript": "^5.9.2"
   },
-  "private": true
+  "overrides": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  }
 }
