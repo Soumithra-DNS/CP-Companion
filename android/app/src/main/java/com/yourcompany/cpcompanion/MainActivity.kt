@@ -1,4 +1,4 @@
-package com.biologist.CP_Companion
+package com.yourcompany.cpcompanion
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

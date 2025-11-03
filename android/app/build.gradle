@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.biologist.CP_Companion'
+    namespace 'com.yourcompany.cpcompanion'
     defaultConfig {
-        applicationId 'com.biologist.CP_Companion'
+        applicationId 'com.yourcompany.cpcompanion'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

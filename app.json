@@ -1,7 +1,6 @@
 {
   "expo": {
     "name": "CP_Companion",
-    "owner": "soumithra",
     "slug": "CP_Companion",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,6 +10,54 @@
     "newArchEnabled": true,
     "runtimeVersion": {
       "policy": "sdkVersion"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.cpcompanion",
+      "associatedDomains": [
+        "applinks:cpcompanion.com"
+      ],
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Use Face ID to authenticate",
+        "NSCameraUsageDescription": "Allow camera access to scan documents",
+        "LSApplicationQueriesSchemes": [
+          "cpcompanion",
+          "https"
+        ]
+      }
+    },
+    "android": {
+      "package": "com.yourcompany.cpcompanion",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "scheme": "https",
+              "host": "cpcompanion.com",
+              "pathPrefix": "/"
+            },
+            {
+              "scheme": "cpcompanion"
+            }
+          ],
+          "autoVerify": true
+        }
+      ],
+      "edgeToEdgeEnabled": true,
+      "softwareKeyboardLayoutMode": "pan",
+      "newArchEnabled": true
     },
     "web": {
       "bundler": "metro",
@@ -41,8 +88,7 @@
             "flipper": false
           },
           "android": {
-            "newArchEnabled": true,
-            "kotlinVersion": "1.9.24"
+            "kotlinVersion": "1.8.0"
           }
         }
       ]
@@ -57,9 +103,6 @@
       "eas": {
         "projectId": "c8ab66fe-c166-444c-b27d-3bd80a68eb86"
       }
-    },
-    "android": {
-      "package": "com.biologist.CP_Companion"
     }
   }
 }

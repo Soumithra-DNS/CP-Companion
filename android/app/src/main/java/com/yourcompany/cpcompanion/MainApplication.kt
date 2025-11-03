@@ -1,4 +1,4 @@
-package com.biologist.CP_Companion
+package com.yourcompany.cpcompanion
 
 import android.app.Application
 import android.content.res.Configuration
