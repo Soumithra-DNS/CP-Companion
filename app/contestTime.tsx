@@ -35,7 +35,7 @@ const COLORS = {
   shadow: "rgba(23,49,62,0.12)",
 };
 
-type PlatformKey = "codeforces" | "atcoder" | "leetcode";
+type PlatformKey = "codeforces" | "codechef" | "leetcode";
 
 interface PlatformData {
   color: string;
@@ -71,14 +71,13 @@ const PLATFORM_DATA: Record<PlatformKey, PlatformData> = {
     enabled: true,
     gradient: ["#FF5722", "#E64A19"],
   },
-  // replaced CodeChef with AtCoder (uses kenkoooo cached JSON)
-  atcoder: {
-    color: "#6A1B9A",
-    icon: "schedule",
-    platformName: "AtCoder",
-    api: "https://kenkoooo.com/atcoder/resources/contests.json",
+  codechef: {
+    color: "#7A3E00",
+    icon: "restaurant",
+    platformName: "CodeChef",
+    api: "https://www.codechef.com/api/list/contests/all",
     enabled: true,
-    gradient: ["#6A1B9A", "#8E24AA"],
+    gradient: ["#7A3E00", "#5A2E00"],
   },
   leetcode: {
     color: "#FFA500",
@@ -175,30 +174,40 @@ export default function ContestTimeScreen(): React.JSX.Element {
                   .filter(Boolean) as Contest[];
               }
 
-              if (key === "atcoder") {
-                // kenkoooo's contests.json is a reliable aggregate for AtCoder contests
+              if (key === "codechef") {
                 const resp = await axios.get(data.api);
-                if (!Array.isArray(resp.data)) return [];
-                const arr: Contest[] = [];
-                resp.data.forEach((c: any) => {
-                  const id = c.id || c.contest_id || c.ContestId || null;
-                  const start = Number(c.start_epoch_second ?? c.startEpochSecond ?? c.start_time ?? NaN);
-                  const dur = Number(c.duration_second ?? c.duration ?? NaN);
-                  const contest: Partial<Contest> = {
-                    id: id ? `atcoder-${id}` : `atcoder-${Math.random()}`,
-                    platform: "atcoder",
-                    name: c.title || c.name || id || "AtCoder Contest",
-                    startTime: isFinite(start) ? new Date(start * 1000) : undefined,
-                    endTime: isFinite(start) && isFinite(dur) ? new Date((start + dur) * 1000) : undefined,
-                    url: id ? `https://atcoder.jp/contests/${id}` : undefined,
-                    color: data.color,
-                    icon: data.icon,
-                    platformName: data.platformName,
-                    gradient: data.gradient,
-                  };
-                  if (isValidContest(contest)) arr.push(contest as Contest);
-                });
-                return arr;
+                const payload = resp.data;
+                
+                // CodeChef API returns present_contests and future_contests
+                const presentContests = Array.isArray(payload.present_contests) ? payload.present_contests : [];
+                const futureContests = Array.isArray(payload.future_contests) ? payload.future_contests : [];
+                const allContests = [...presentContests, ...futureContests];
+
+                if (!Array.isArray(allContests) || allContests.length === 0) return [];
+
+                return allContests
+                  .map((c: any) => {
+                    const contestCode = c.contest_code;
+                    const contestName = c.contest_name;
+                    const startTimeStr = c.contest_start_date_iso;
+                    const endTimeStr = c.contest_end_date_iso;
+
+                    const contest: Partial<Contest> = {
+                      id: `codechef-${contestCode}`,
+                      platform: "codechef",
+                      name: contestName,
+                      startTime: startTimeStr ? new Date(startTimeStr) : undefined,
+                      endTime: endTimeStr ? new Date(endTimeStr) : undefined,
+                      url: contestCode ? `https://www.codechef.com/${contestCode}` : "https://www.codechef.com/contests",
+                      color: data.color,
+                      icon: data.icon,
+                      platformName: data.platformName,
+                      gradient: data.gradient,
+                    };
+
+                    return isValidContest(contest) ? (contest as Contest) : null;
+                  })
+                  .filter(Boolean) as Contest[];
               }
 
               if (key === "leetcode") {
@@ -298,25 +307,22 @@ export default function ContestTimeScreen(): React.JSX.Element {
     Linking.openURL(url).catch((e) => console.error("Failed to open URL:", e)), []);
 
   const { liveContests, upcomingContests, pastContests } = useMemo(() => {
-    const now = Date.now();
     const live: Contest[] = [];
     const upcoming: Contest[] = [];
     const past: Contest[] = [];
-    
+
+    // Use centralized getStatus so classification matches UI badges/timers
     contests.forEach((c) => {
-      if (c.startTime.getTime() > now) {
-        upcoming.push(c);
-      } else if (c.endTime.getTime() > now) {
-        live.push(c);
-      } else {
-        past.push(c);
-      }
+      const status = getStatus(c.startTime, c.endTime);
+      if (status === "live") live.push(c);
+      else if (status === "upcoming") upcoming.push(c);
+      else past.push(c);
     });
-    
-    return { 
-      liveContests: live, 
-      upcomingContests: upcoming, 
-      pastContests: past.reverse() 
+
+    return {
+      liveContests: live,
+      upcomingContests: upcoming,
+      pastContests: past.reverse(),
     };
   }, [contests]);
 
